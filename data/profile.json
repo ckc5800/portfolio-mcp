@@ -7,58 +7,213 @@
     "blog": "https://taepseon.tistory.com"
   },
   "career": [
-    {"company": "에이아이세스 (AICESS)", "period": "2025.04 ~ 현재", "role": "Manager"},
-    {"company": "인피닉 (INFINIIC)", "period": "2022.08 ~ 2025.04", "role": "AI Engineer/MLOps Engineer"},
-    {"company": "이든티앤에스 (EDEN T&S)", "period": "2022.04 ~ 2022.08", "role": "AI Engineer"},
-    {"company": "큐헷지 (QUHEDGE)", "period": "2020.09 ~ 2021.09", "role": "Intern"},
-    {"company": "KISTI", "period": "2017.10 ~ 2018.01", "role": "Part-time"}
+    {
+      "company": "MiCo AI (구 에이아이세스)",
+      "period": "2025.04 ~ 현재",
+      "role": "Manager"
+    },
+    {
+      "company": "인피닉 (INFINIIC)",
+      "period": "2022.08 ~ 2025.04",
+      "role": "AI Engineer/MLOps Engineer"
+    },
+    {
+      "company": "이든티앤에스 (EDEN T&S)",
+      "period": "2022.04 ~ 2022.08",
+      "role": "AI Engineer"
+    },
+    {
+      "company": "큐헷지 (QUHEDGE)",
+      "period": "2020.09 ~ 2021.09",
+      "role": "Intern"
+    },
+    {
+      "company": "KISTI",
+      "period": "2017.10 ~ 2018.01",
+      "role": "Part-time"
+    }
   ],
   "projects": [
-    {"name": "TTS 프로젝트", "company": "에이아이세스", "period": "2025.09 ~ 현재", "role": "PM 및 풀스택 개발",
-     "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이. TTFB 2292ms→334ms(85% 단축), 동시 채널 12→24, Throughput 0.68→1.41→~1.7rps, RTF 0.1 이하, CER 3~5%, 32개 언어 지원, ITN 정확도 50.1%→70.9%"},
-    {"name": "STT 배포", "company": "에이아이세스", "period": "2025.07 ~ 2025.09", "role": "배포/서빙 담당 (팀 협업)",
-     "summary": "WhisperX 기반 STT 엔진 성능 개선, Triton Inference Server 기반 추론 환경 최적화. AIG 요구사항 해결 4건"},
-    {"name": "Speaker Diarization", "company": "에이아이세스", "period": "2025.04 ~ 2025.07", "role": "화자 분할 파인튜닝",
-     "summary": "Pyannote 사전 학습 모델 파인튜닝(데이터 수집·파라미터 튜닝·학습), 화자 분할-STT 연동 파이프라인 작업"},
-    {"name": "Kubernetes 기반 AI 인프라", "company": "인피닉", "period": "2024.03 ~ 2025.04", "role": "회사 최초 K8s 플랫폼 구축",
-     "summary": "VM/수동 배포에서 컨테이너 자동화 전환. GitLab→Jenkins→ArgoCD GitOps CI/CD, Helm, MetalLB, Prometheus/Grafana/Loki 모니터링, 20개+ ML 모델 운영 환경"},
-    {"name": "NLP 텍스트 요약", "company": "인피닉", "period": "2024.01 ~ 2024.07", "role": "요약 시스템 개발",
-     "summary": "BART 대화 요약, T5 문서 요약 모델 학습·개선. 사내 자체 개발 메신저에 회의록·문서 요약 기능 적용"},
-    {"name": "생성모델 연구 (Latent Diffusion)", "company": "인피닉", "period": "2023.01 ~ 2023.12", "role": "국방 데이터 확보 연구",
-     "summary": "Latent Diffusion 기반 합성 데이터 생성, LoRA 파인튜닝. 우수논문상 수상(국방기술학회 2023.11), GAN 동향 논문 게재"},
-    {"name": "전차 탐지 모델", "company": "인피닉", "period": "2023.01 ~ 2023.08", "role": "탐지 모델 개발",
-     "summary": "YOLO 기반 전차 탐지 모델 개발, 데이터 증강 및 하이퍼파라미터 튜닝"},
-    {"name": "3D Semantic Segmentation 연구", "company": "인피닉", "period": "2022.08 ~ 2022.12", "role": "센서 퓨전 연구",
-     "summary": "Trans-Unet 기반 LiDAR+카메라 센서 퓨전. 논문 2편(한국자동차공학회), 특허 2건 등록(제1발명자)"},
-    {"name": "OCR Annotation Tool", "company": "이든티앤에스", "period": "2022.04 ~ 2022.08", "role": "단독 개발",
-     "summary": "PyQt GUI 툴 설계·단독 개발. Tesseract/ViT 표 탐지, RNN 텍스트 추출. OCR 학습 데이터 생성 자동화, 성과금 수령"},
-    {"name": "금융 데이터 파이프라인", "company": "큐헷지", "period": "2020.09 ~ 2021.09", "role": "인턴",
-     "summary": "금융 데이터 크롤링, Pandas/NumPy 기반 정제·검증·저장 자동화 파이프라인"},
-    {"name": "Corrective-RAG + Tool-Calling Agent", "company": "개인 프로젝트", "period": "2026.07", "role": "개인 구축",
-     "summary": "LangGraph 기반 self-corrective RAG + 도구 선택 Agent. FAISS+BM25 하이브리드(RRF), 평가 루프로 결함 5건 발견·수정. github.com/ckc5800/rag-agent"}
+    {
+      "name": "TTS 프로젝트",
+      "company": "MiCo AI",
+      "period": "2025.09 ~ 현재",
+      "role": "PM 및 풀스택 개발",
+      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이. TTFB 2292ms→334ms(85% 단축), 동시 채널 12→24, Throughput 0.68→1.41→~1.7rps, RTF 0.1 이하, CER 3~5%, 32개 언어 지원, ITN 정확도 50.1%→70.9%"
+    },
+    {
+      "name": "STT 배포",
+      "company": "MiCo AI",
+      "period": "2025.07 ~ 2025.09",
+      "role": "배포/서빙 담당 (팀 협업)",
+      "summary": "WhisperX 기반 STT 엔진 성능 개선, Triton Inference Server 기반 추론 환경 최적화. AIG 요구사항 해결 4건"
+    },
+    {
+      "name": "Speaker Diarization",
+      "company": "MiCo AI",
+      "period": "2025.04 ~ 2025.07",
+      "role": "화자 분할 파인튜닝",
+      "summary": "Pyannote 사전 학습 모델 파인튜닝(데이터 수집·파라미터 튜닝·학습), 화자 분할-STT 연동 파이프라인 작업"
+    },
+    {
+      "name": "Kubernetes 기반 AI 인프라",
+      "company": "인피닉",
+      "period": "2024.03 ~ 2025.04",
+      "role": "회사 최초 K8s 플랫폼 구축",
+      "summary": "VM/수동 배포에서 컨테이너 자동화 전환. GitLab→Jenkins→ArgoCD GitOps CI/CD, Helm, MetalLB, Prometheus/Grafana/Loki 모니터링, 20개+ ML 모델 운영 환경"
+    },
+    {
+      "name": "NLP 텍스트 요약",
+      "company": "인피닉",
+      "period": "2024.01 ~ 2024.07",
+      "role": "요약 시스템 개발",
+      "summary": "BART 대화 요약, T5 문서 요약 모델 학습·개선. 사내 자체 개발 메신저에 회의록·문서 요약 기능 적용"
+    },
+    {
+      "name": "생성모델 연구 (Latent Diffusion)",
+      "company": "인피닉",
+      "period": "2023.01 ~ 2023.12",
+      "role": "국방 데이터 확보 연구",
+      "summary": "Latent Diffusion 기반 합성 데이터 생성, LoRA 파인튜닝. 우수논문상 수상(국방기술학회 2023.11), GAN 동향 논문 게재"
+    },
+    {
+      "name": "전차 탐지 모델",
+      "company": "인피닉",
+      "period": "2023.01 ~ 2023.08",
+      "role": "탐지 모델 개발",
+      "summary": "YOLO 기반 전차 탐지 모델 개발, 데이터 증강 및 하이퍼파라미터 튜닝"
+    },
+    {
+      "name": "3D Semantic Segmentation 연구",
+      "company": "인피닉",
+      "period": "2022.08 ~ 2022.12",
+      "role": "센서 퓨전 연구",
+      "summary": "Trans-Unet 기반 LiDAR+카메라 센서 퓨전. 논문 2편(한국자동차공학회), 특허 2건 등록(제1발명자)"
+    },
+    {
+      "name": "OCR Annotation Tool",
+      "company": "이든티앤에스",
+      "period": "2022.04 ~ 2022.08",
+      "role": "단독 개발",
+      "summary": "PyQt GUI 툴 설계·단독 개발. Tesseract/ViT 표 탐지, RNN 텍스트 추출. OCR 학습 데이터 생성 자동화, 성과금 수령"
+    },
+    {
+      "name": "금융 데이터 파이프라인",
+      "company": "큐헷지",
+      "period": "2020.09 ~ 2021.09",
+      "role": "인턴",
+      "summary": "금융 데이터 크롤링, Pandas/NumPy 기반 정제·검증·저장 자동화 파이프라인"
+    },
+    {
+      "name": "Corrective-RAG + Tool-Calling Agent",
+      "company": "개인 프로젝트",
+      "period": "2026.07",
+      "role": "개인 구축",
+      "summary": "LangGraph 기반 self-corrective RAG + 도구 선택 Agent. FAISS+BM25 하이브리드(RRF), 평가 루프로 결함 5건 발견·수정. github.com/ckc5800/rag-agent"
+    }
   ],
   "publications": [
-    {"title": "국방 데이터 확보를 위한 생성모델 Latent Diffusion 실험", "venue": "국방기술학회", "year": "2023.08", "note": "우수논문상 수상 (2023.11)"},
-    {"title": "GAN을 활용한 데이터 생성 연구 동향", "venue": "한국항공우주학회", "year": "2023.06"},
-    {"title": "센서 퓨전 기반의 Trans-Unet을 활용한 2차원 시맨틱 세그멘테이션의 3차원적 해석", "venue": "한국자동차공학회", "year": "2023.04"},
-    {"title": "자율 주행 도메인의 3차원 시맨틱 세그멘테이션을 위한 센서 퓨전 기반의 Trans-Unet", "venue": "한국자동차공학회", "year": "2022.11"},
-    {"title": "비정형, 정형 데이터의 이미지 학습을 활용한 시장예측", "venue": "스마트미디어학회", "year": "2021.03"},
-    {"title": "Deep Learning을 활용한 악성코드 탐지 방법 동향 분석", "venue": "한국정보기술학회", "year": "2018.06"},
-    {"title": "Trend of Malware Detection Using Deep Learning", "venue": "ACM International Conference", "year": "2018.04"}
+    {
+      "title": "국방 데이터 확보를 위한 생성모델 Latent Diffusion 실험",
+      "venue": "국방기술학회",
+      "year": "2023.08",
+      "note": "우수논문상 수상 (2023.11)"
+    },
+    {
+      "title": "GAN을 활용한 데이터 생성 연구 동향",
+      "venue": "한국항공우주학회",
+      "year": "2023.06"
+    },
+    {
+      "title": "센서 퓨전 기반의 Trans-Unet을 활용한 2차원 시맨틱 세그멘테이션의 3차원적 해석",
+      "venue": "한국자동차공학회",
+      "year": "2023.04"
+    },
+    {
+      "title": "자율 주행 도메인의 3차원 시맨틱 세그멘테이션을 위한 센서 퓨전 기반의 Trans-Unet",
+      "venue": "한국자동차공학회",
+      "year": "2022.11"
+    },
+    {
+      "title": "비정형, 정형 데이터의 이미지 학습을 활용한 시장예측",
+      "venue": "스마트미디어학회",
+      "year": "2021.03"
+    },
+    {
+      "title": "Deep Learning을 활용한 악성코드 탐지 방법 동향 분석",
+      "venue": "한국정보기술학회",
+      "year": "2018.06"
+    },
+    {
+      "title": "Trend of Malware Detection Using Deep Learning",
+      "venue": "ACM International Conference",
+      "year": "2018.04"
+    }
   ],
   "patents": [
-    {"title": "센서 퓨전 기반의 시맨틱 세그멘테이션 방법", "reg_no": "1025382250000", "date": "2023.05.25", "note": "제1발명자"},
-    {"title": "시맨틱 세그멘테이션의 3차원 해석 방법", "reg_no": "1025382310000", "date": "2023.05.25", "note": "제1발명자"}
+    {
+      "title": "센서 퓨전 기반의 시맨틱 세그멘테이션 방법",
+      "reg_no": "1025382250000",
+      "date": "2023.05.25",
+      "note": "제1발명자"
+    },
+    {
+      "title": "시맨틱 세그멘테이션의 3차원 해석 방법",
+      "reg_no": "1025382310000",
+      "date": "2023.05.25",
+      "note": "제1발명자"
+    }
   ],
   "education": [
-    {"degree": "M.S. Computer Science", "school": "인하대학교", "year": "2021.08"},
-    {"degree": "B.S. Computer Science", "school": "한남대학교", "year": "2018.02"}
+    {
+      "degree": "M.S. Computer Science",
+      "school": "인하대학교",
+      "year": "2021.08"
+    },
+    {
+      "degree": "B.S. Computer Science",
+      "school": "한남대학교",
+      "year": "2018.02"
+    }
   ],
   "skills": {
-    "languages": ["Python", "TypeScript", "Bash", "SQL"],
-    "ai_ml": ["PyTorch", "Hugging Face", "vLLM", "ONNX Runtime", "Whisper", "LangGraph"],
-    "serving": ["vLLM", "Triton Inference Server", "FastAPI", "gRPC", "WebSocket"],
-    "devops": ["Kubernetes", "Docker", "Helm", "GitLab CI", "Jenkins", "ArgoCD", "Prometheus", "Grafana"],
-    "data": ["Redis", "PostgreSQL", "MongoDB", "FAISS", "S3"]
+    "languages": [
+      "Python",
+      "TypeScript",
+      "Bash",
+      "SQL"
+    ],
+    "ai_ml": [
+      "PyTorch",
+      "Hugging Face",
+      "vLLM",
+      "ONNX Runtime",
+      "Whisper",
+      "LangGraph"
+    ],
+    "serving": [
+      "vLLM",
+      "Triton Inference Server",
+      "FastAPI",
+      "gRPC",
+      "WebSocket"
+    ],
+    "devops": [
+      "Kubernetes",
+      "Docker",
+      "Helm",
+      "GitLab CI",
+      "Jenkins",
+      "ArgoCD",
+      "Prometheus",
+      "Grafana"
+    ],
+    "data": [
+      "Redis",
+      "PostgreSQL",
+      "MongoDB",
+      "FAISS",
+      "S3"
+    ]
   }
 }
