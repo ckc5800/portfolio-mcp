@@ -1,81 +1,77 @@
-# Portfolio MCP Server
+# portfolio-mcp
 
-AI 엔지니어 이윤선의 포트폴리오를 **MCP(Model Context Protocol) 서버**로 노출합니다.
-Claude Desktop, Claude Code 등 MCP 클라이언트에서 포트폴리오 검색·경력 조회를
-도구로 사용할 수 있습니다 — "이 사람 TTFB 최적화 어떻게 했어?"라고 AI에게 물어보세요.
+내 포트폴리오를 MCP(Model Context Protocol) 서버로 만들었다.
+Claude Desktop이나 Claude Code에 붙이면 AI가 내 경력, 프로젝트, 논문을
+도구로 직접 조회한다. "이 사람 TTFB 최적화 어떻게 했어?" 같은 질문이 가능해진다.
 
-![데모 — 실제 MCP 세션 출력 리플레이](assets/demo.svg)
+![demo](assets/demo.svg)
 
-> 위 데모는 `demo_session.py`로 실행한 **실제 MCP 클라이언트-서버 세션의 출력**을 리플레이한 것입니다.
+데모는 `demo_session.py`로 실행한 실제 세션 출력을 그대로 옮긴 것이다.
+
+## 구성
 
 ```
 MCP Client (Claude 등)
    │  stdio
    ▼
-portfolio_mcp ──── BM25 검색 ──── data/docs/*.md   (기술문서 5편)
-   └────────────── 구조화 조회 ─── data/profile.json (검증된 경력 사실)
+portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
+   └─────────── 구조화 조회 ── data/profile.json   경력 사실
 ```
 
-## Tools
-
-| 도구 | 설명 |
+| 도구 | 하는 일 |
 |---|---|
-| `portfolio_get_profile` | 기본 프로필 — 경력 회사·기간·직급, 학력, 기술 스택, 링크 |
-| `portfolio_list_projects` | 프로젝트 11개 목록 (회사 필터 지원) — 기간·역할·검증된 성과 요약 |
-| `portfolio_get_publications` | 논문 7편(제1저자)·특허 2건(제1발명자)·수상 내역 |
-| `portfolio_search` | 기술문서 BM25 검색 — 트러블슈팅 과정, 아키텍처 세부사항 등 |
+| `portfolio_get_profile` | 경력 회사·기간·직급, 학력, 기술 스택, 링크 |
+| `portfolio_list_projects` | 프로젝트 11개 목록. 회사명 필터 지원 |
+| `portfolio_get_publications` | 논문 7편(제1저자), 특허 2건(제1발명자), 수상 |
+| `portfolio_search` | 기술문서 BM25 검색. 트러블슈팅 과정 같은 세부 내용용 |
 
-모든 도구는 read-only이며, 데이터는 원본 기록에서 검증된 사실만 수록했습니다.
+전부 read-only다.
 
-## 설계 결정
+## 설계하면서 정한 것들
 
-- **의존성 최소화**: `mcp` + `rank_bm25` 뿐. 임베딩 서버·외부 API·GPU 불필요 →
-  clone 후 30초 안에 동작. MCP 서버는 도구만 제공하고 추론은 클라이언트 LLM이
-  담당하므로, 서버는 가볍고 결정적으로 유지
-- **BM25 키워드 검색**: 포트폴리오 규모(문서 5편, ~80청크)에서는 벡터 검색 대비
-  운영 비용 없이 충분한 재현율. 한/영/숫자 정규식 토크나이저 적용
-- **구조화 + 비구조화 이원화**: 확정 사실(경력·논문·수치)은 `profile.json`으로
-  정확하게, 서술형 세부사항은 문서 검색으로 유연하게
-- **Actionable 오류 응답**: 검색 결과 없음/필터 불일치 시 다음 행동을 안내하는
-  hint 필드 반환
+- 의존성은 `mcp` SDK와 `rank_bm25` 둘뿐이다. 처음엔 임베딩 검색도 고려했는데
+  문서 5편에 청크 80개 규모에서 벡터 검색은 과하다. BM25면 충분하고,
+  덕분에 GPU도 외부 API도 없이 clone 후 바로 돈다.
+- 추론은 클라이언트 LLM의 몫이다. 서버는 데이터만 정확하게 내려주면 된다.
+- 확정된 사실(경력, 논문, 수치)은 `profile.json`으로, 서술형 내용은 문서 검색으로
+  분리했다. 숫자가 검색 랭킹에 따라 흔들리면 안 되기 때문이다.
+- 검색 결과가 비면 "다른 키워드로 재검색하거나 목록부터 보라"는 힌트를
+  응답에 같이 넣는다. 에러 메시지가 다음 행동을 알려줘야 agent가 헤매지 않는다.
 
-## Quickstart
+## 실행
 
 ```bash
 python -m venv .venv && .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 스모크 테스트 (서버 기동 + 4개 도구 호출)
-python test_client.py
+python test_client.py   # 서버 기동 + 도구 4개 호출 스모크 테스트
 ```
 
-### Claude Code에 연결
+## Claude에 연결
+
+Claude Code:
 
 ```bash
-claude mcp add portfolio -- python -X utf8 /path/to/portfolio-mcp/server.py
+claude mcp add portfolio /path/to/.venv/Scripts/python.exe /path/to/portfolio-mcp/server.py
 ```
 
-### Claude Desktop에 연결
-
-`claude_desktop_config.json`:
+Claude Desktop (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "portfolio": {
-      "command": "python",
-      "args": ["-X", "utf8", "C:/path/to/portfolio-mcp/server.py"]
+      "command": "C:/path/to/portfolio-mcp/.venv/Scripts/python.exe",
+      "args": ["C:/path/to/portfolio-mcp/server.py"]
     }
   }
 }
 ```
 
-연결 후 이렇게 물어보세요:
+연결하고 이런 걸 물어보면 된다.
 
-> "이윤선의 TTS 프로젝트에서 스트리밍 팝 노이즈를 어떻게 해결했는지 찾아줘"
-> "인피닉에서 한 프로젝트 목록 보여줘"
-> "특허 등록번호 알려줘"
+- 이윤선의 TTS 프로젝트에서 스트리밍 팝 노이즈를 어떻게 해결했는지 찾아줘
+- 인피닉에서 한 프로젝트 목록 보여줘
+- 특허 등록번호 알려줘
 
-## Tech
-
-Python · MCP SDK (FastMCP) · BM25 (rank_bm25) · stdio transport
+Python / MCP SDK (FastMCP) / rank_bm25 / stdio
