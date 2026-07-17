@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 470" font-family="'Cascadia Code', Consolas, 'D2Coding', monospace" font-size="14">
+  <rect width="860" height="470" rx="10" fill="#1e1e2e"/>
+  <rect width="860" height="34" rx="10" fill="#181825"/>
+  <rect y="24" width="860" height="10" fill="#181825"/>
+  <circle cx="22" cy="17" r="6" fill="#f38ba8"/>
+  <circle cx="42" cy="17" r="6" fill="#f9e2af"/>
+  <circle cx="62" cy="17" r="6" fill="#a6e3a1"/>
+  <text x="430" y="22" fill="#6c7086" text-anchor="middle" font-size="12">portfolio-mcp — 실제 MCP 세션 리플레이</text>
+
+  <g fill="#cdd6f4">
+    <text x="24" y="62" fill="#9399b2" opacity="0">$ python demo_session.py
+      <animate attributeName="opacity" from="0" to="1" begin="0.3s" dur="0.2s" fill="freeze"/></text>
+    <text x="24" y="86" fill="#9399b2" opacity="0">MCP 서버 연결됨 — 도구 4개: get_profile · list_projects · get_publications · search
+      <animate attributeName="opacity" from="0" to="1" begin="0.9s" dur="0.2s" fill="freeze"/></text>
+
+    <text x="24" y="122" font-weight="bold" opacity="0">&gt; 이윤선이 누구야?
+      <animate attributeName="opacity" from="0" to="1" begin="1.8s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="146" fill="#89dceb" opacity="0">[tool call] portfolio_get_profile({})
+      <animate attributeName="opacity" from="0" to="1" begin="2.8s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="170" fill="#a6e3a1" opacity="0">→ 이윤선 (Lee Yoon Seon) — 6년차 AI 엔지니어 · AI·MLOps, 프로덕션 ML 시스템
+      <animate attributeName="opacity" from="0" to="1" begin="3.7s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="194" fill="#a6e3a1" opacity="0">→ 경력: 에이아이세스 / 인피닉 / 이든티앤에스 / 큐헷지 / KISTI
+      <animate attributeName="opacity" from="0" to="1" begin="4.4s" dur="0.2s" fill="freeze"/></text>
+
+    <text x="24" y="230" font-weight="bold" opacity="0">&gt; TTS 스트리밍 팝 노이즈는 어떻게 해결했어?
+      <animate attributeName="opacity" from="0" to="1" begin="5.6s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="254" fill="#89dceb" opacity="0">[tool call] portfolio_search({"query": "팝 노이즈 Residual Buffer"})
+      <animate attributeName="opacity" from="0" to="1" begin="6.6s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="278" fill="#a6e3a1" opacity="0">→ [tts-deepdive.md] Frontend 잔여 버퍼(Residual Buffer) 설계 — 홀수 바이트를
+      <animate attributeName="opacity" from="0" to="1" begin="7.6s" dur="0.2s" fill="freeze"/></text>
+    <text x="55" y="302" fill="#a6e3a1" opacity="0">짝수로 강제 정렬(Alignment)해 Float32Array 생성… 팝 노이즈 근절
+      <animate attributeName="opacity" from="0" to="1" begin="8.2s" dur="0.2s" fill="freeze"/></text>
+
+    <text x="24" y="338" font-weight="bold" opacity="0">&gt; 특허 등록번호 알려줘
+      <animate attributeName="opacity" from="0" to="1" begin="9.4s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="362" fill="#89dceb" opacity="0">[tool call] portfolio_get_publications({})
+      <animate attributeName="opacity" from="0" to="1" begin="10.4s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="386" fill="#a6e3a1" opacity="0">→ 센서 퓨전 기반의 시맨틱 세그멘테이션 방법 — 등록번호 1025382250000
+      <animate attributeName="opacity" from="0" to="1" begin="11.3s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="410" fill="#a6e3a1" opacity="0">→ 시맨틱 세그멘테이션의 3차원 해석 방법 — 등록번호 1025382310000
+      <animate attributeName="opacity" from="0" to="1" begin="12.0s" dur="0.2s" fill="freeze"/></text>
+
+    <text x="24" y="446" fill="#9399b2" opacity="0">$ <tspan fill="#cdd6f4">▌</tspan>
+      <animate attributeName="opacity" from="0" to="1" begin="13s" dur="0.2s" fill="freeze"/></text>
+  </g>
+</svg>
