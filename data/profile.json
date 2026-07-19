@@ -105,11 +105,11 @@
       "summary": "금융 데이터 크롤링, Pandas/NumPy 기반 정제·검증·저장 자동화 파이프라인"
     },
     {
-      "name": "Corrective-RAG + Tool-Calling Agent",
+      "name": "Corrective-RAG + Multi-Agent 시스템",
       "company": "개인 프로젝트",
       "period": "2026.07",
       "role": "개인 구축",
-      "summary": "LangGraph 기반 self-corrective RAG + 도구 선택 Agent. FAISS+BM25 하이브리드(RRF), 평가 루프로 결함 5건 발견·수정. github.com/ckc5800/rag-agent"
+      "summary": "LangGraph 기반 self-corrective RAG + Tool-Calling + Multi-Agent(Planner-Workers-Synthesizer). FAISS+BM25 하이브리드(RRF), 평가 루프로 결함 7건 발견·수정, 통제 실험 기반 디버깅. github.com/ckc5800/rag-agent"
     },
     {
       "name": "Portfolio MCP Server",
