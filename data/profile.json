@@ -60,14 +60,14 @@
       "company": "인피닉",
       "period": "2024.03 ~ 2025.04",
       "role": "회사 최초 K8s 플랫폼 구축",
-      "summary": "VM/수동 배포에서 컨테이너 자동화 전환. GitLab→Jenkins→ArgoCD GitOps CI/CD, Helm, MetalLB, Prometheus/Grafana/Loki 모니터링, 20개+ ML 모델 운영 환경"
+      "summary": "온프레미스 클러스터에 사내 최초 K8s 도입 — 운영 환경 분석부터 아키텍처 설계·배포·운영까지 전 과정. MetalLB LoadBalancer, Nginx Ingress, NFS PV/PVC, Deployment/StatefulSet 배포. GitLab→Jenkins/Argo Workflow→Harbor→ArgoCD CI/CD, Prometheus/Grafana/AlertManager + Loki/ELK. 20개+ ML 모델 자동 배포, 장애 대응·리소스 관리"
     },
     {
       "name": "NLP 텍스트 요약",
       "company": "인피닉",
       "period": "2024.01 ~ 2024.07",
       "role": "요약 시스템 개발",
-      "summary": "BART 대화 요약, T5 문서 요약 모델 학습·개선. 사내 자체 개발 메신저에 회의록·문서 요약 기능 적용"
+      "summary": "부재 후 복귀 시 쌓인 단체방 대화 파악이 오래 걸리는 문제에서 출발. 대화 요약 BART(R3F 정규화 파인튜닝), 문서 요약 T5. 한국어 대화-요약 쌍 데이터 수집·전처리, ROUGE+휴먼 평가. 사내 메신저에 적용 — 공지 한 줄 요약, 업무 대화 2초대 요약"
     },
     {
       "name": "생성모델 연구 (Latent Diffusion)",
