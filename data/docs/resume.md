@@ -35,6 +35,8 @@ Python 3.12, FastAPI, WebSocket, vLLM-Omni, Redis (Pub/Sub, Distributed Lock, TT
 STT 배포 (2025.07 ~ 2025.09)
 • 배경: AIG 상담센터의 대량 상담 전화를 실시간으로 처리해야 했으나 기존 시스템은 동시 채널이 부족했음
 • 팀 내 배포·서빙 담당으로 WhisperX 기반 STT 엔진을 맡아, 배치 처리와 실시간 스트리밍을 모두 지원하도록 운영 구조를 고도화
+• 코드 모듈화와 전처리 병렬화로 처리 속도를 높이고, 로그·Docker 구조 개선과 컨테이너 재시작 모니터링으로 안정성을 보강
+• 사내 회의록 기능에도 STT를 탑재 — Whisper 계열 모델별 성능을 조사해 최적 파라미터를 찾고, 파일 기반과 스트리밍 기반 처리를 모두 구현
 • 기술: Triton Inference Server, Streaming ASR Pipeline, Docker
 • Triton Inference Server 기반으로 추론 환경을 최적화해 동시 처리 채널을 늘렸고, 고객사 AIG의 요구사항 4건을 해결
 Speaker Diarization (2025.04 ~ 2025.07)
