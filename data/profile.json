@@ -130,7 +130,7 @@
       "company": "개인 프로젝트",
       "period": "2026.07",
       "role": "개인 구축",
-      "summary": "OpenAI 호환 LLM 엔드포인트 부하 측정 CLI — TTFT/지연 percentile/처리량, 동시성 스윕. Ollama 직렬화 병목 실측 포착. github.com/ckc5800/llm-bench"
+      "summary": "OpenAI 호환 LLM 엔드포인트 부하 측정 CLI — TTFT/지연 percentile/처리량, 동시성 스윕. Ollama 직렬화 병목 실측 포착 후 NUM_PARALLEL 조정 재실험으로 검증(TTFT p50 12.4s→0.9s, 처리량 8.1→22.9 tok/s). github.com/ckc5800/llm-bench"
     },
     {
       "name": "심전도 부정맥 진단 AI",
