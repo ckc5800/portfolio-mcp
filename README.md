@@ -1,5 +1,7 @@
 # portfolio-mcp
 
+![CI](https://github.com/ckc5800/portfolio-mcp/actions/workflows/ci.yml/badge.svg)
+
 내 포트폴리오를 MCP(Model Context Protocol) 서버로 만들었다.
 Claude Desktop이나 Claude Code에 붙이면 AI가 내 경력, 프로젝트, 논문을
 도구로 직접 조회한다. "이 사람 TTFB 최적화 어떻게 했어?" 같은 질문이 가능해진다.

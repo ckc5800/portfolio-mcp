@@ -9,7 +9,8 @@ from mcp.client.stdio import stdio_client
 SERVER = str(Path(__file__).parent / "server.py")
 
 
-async def main():
+async def main() -> int:
+    failures = 0
     params = StdioServerParameters(command=sys.executable, args=["-X", "utf8", SERVER])
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -19,6 +20,9 @@ async def main():
             print(f"도구 {len(tools.tools)}개 등록:")
             for t in tools.tools:
                 print(f"  - {t.name}")
+            if len(tools.tools) != 4:
+                print(f"[FAIL] 도구 수 4개 기대, {len(tools.tools)}개 등록됨")
+                failures += 1
 
             cases = [
                 ("portfolio_get_profile", {}),
@@ -29,9 +33,12 @@ async def main():
             for name, args in cases:
                 result = await session.call_tool(name, args)
                 text = result.content[0].text if result.content else ""
-                status = "OK" if text and not result.isError else "FAIL"
-                print(f"[{status}] {name} → {text[:100]}...")
+                ok = bool(text) and not result.isError
+                failures += not ok
+                print(f"[{'OK' if ok else 'FAIL'}] {name} → {text[:100]}...")
+
+    return failures
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    sys.exit(1 if asyncio.run(main()) else 0)
