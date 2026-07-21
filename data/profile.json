@@ -109,14 +109,14 @@
       "company": "개인 프로젝트",
       "period": "2026.07",
       "role": "개인 구축",
-      "summary": "LangGraph 기반 self-corrective RAG + Tool-Calling + Multi-Agent(Planner-Workers-Synthesizer). FAISS+BM25 하이브리드(RRF), 평가 루프로 결함 7건 발견·수정, 통제 실험 기반 디버깅. github.com/ckc5800/rag-agent"
+      "summary": "LangGraph 기반 self-corrective RAG + Tool-Calling + Multi-Agent(Planner-Workers-Synthesizer) + MCP 클라이언트 레이어. FAISS+BM25 하이브리드(RRF), 평가 루프로 결함 7건 발견·수정, 검색/생성 분리 평가(retrieval recall@3 90%, 엄격 채점 정답률 70%). github.com/ckc5800/rag-agent"
     },
     {
       "name": "Portfolio MCP Server",
       "company": "개인 프로젝트",
       "period": "2026.07",
       "role": "개인 구축",
-      "summary": "포트폴리오를 MCP 서버로 노출 — read-only 도구 4개(프로필/프로젝트/논문/BM25 검색), FastMCP stdio, 의존성 2개 경량 설계. github.com/ckc5800/portfolio-mcp"
+      "summary": "포트폴리오를 MCP 서버로 노출 — read-only 도구 4개(프로필/프로젝트/논문/BM25 검색), FastMCP stdio, 의존성 2개 경량 설계. rag-agent가 MCP 클라이언트로 소비해 서버·클라이언트 양방향 구현. github.com/ckc5800/portfolio-mcp"
     },
     {
       "name": "예지보전 Agent (pdm-agent)",
