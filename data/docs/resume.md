@@ -53,7 +53,7 @@ Kubernetes 기반 AI 인프라 (2024.03 ~ 2025.04)
 • 온프레미스에는 클라우드식 로드밸런서가 없어 MetalLB로 LoadBalancer를 직접 구성하고, Nginx Ingress Controller로 외부 요청 라우팅과 서비스 노출 구조를 설계. 영속 데이터는 NFS 기반 PV/PVC로 구성
 • 기술: Kubernetes, Docker, Helm, GitLab CI/CD, Jenkins, Argo Workflow, ArgoCD, Harbor, MetalLB, Nginx Ingress, NFS(PV/PVC), Prometheus/Grafana/AlertManager, Loki/ELK
 • GitLab에 소스가 올라오면 Jenkins와 Argo Workflow가 이미지를 빌드해 Harbor 레지스트리에 올리고, ArgoCD가 클러스터에 배포하는 CI/CD 파이프라인을 구축해 20개 이상의 ML 모델을 자동 배포
-• Prometheus와 Grafana로 서비스·클러스터 모니터링을, AlertManager로 경보를, Loki와 ELK로 로그 수집·분석을 구축하고, 이후 클러스터 장애 대응과 리소스 관리까지 운영을 담당
+• Prometheus와 Grafana로 서비스·클러스터 모니터링을, AlertManager로 경보를 구축. 로그는 클러스터에 Elasticsearch(ELK 스택)와 Loki를 직접 설치해 수집·조회 환경을 만들고, 이후 클러스터 장애 대응과 리소스 관리까지 운영을 담당
 NLP-based Text Summarization System (2024.01 ~ 2024.07)
 • 배경: 휴가나 부재 후 복귀한 직원이 단체방에 쌓인 업무 대화를 따라잡는 데 오랜 시간이 걸린다는 문제에서 출발, 사내 메신저에 넣을 요약 모델을 개발
 • 대화 요약은 BART, 문서 요약은 T5로 나눠 개발. 한국어 대화-요약 쌍 데이터 수집과 전처리, 임베딩 모델 선정까지 학습 파이프라인을 직접 구축
