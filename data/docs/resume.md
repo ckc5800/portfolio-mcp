@@ -47,7 +47,7 @@ STT 배포 (2025.07 ~ 2025.09)
 • Triton Inference Server 기반으로 추론 환경을 최적화해 동시 처리 채널을 늘렸고, 고객사 AIG의 요구사항 4건을 해결
 Speaker Diarization (2025.04 ~ 2025.07)
 • 배경: 상담 품질을 분석하려면 상담사와 고객의 발화부터 구분해야 했음
-• Pyannote 사전 학습 모델을 한국어 상담 데이터로 파인튜닝하고 STT와 연동해, 상담사와 고객이 구분된 전사 결과가 나오는 파이프라인을 구성
+• Pyannote 사전 학습 모델을 공개 화자분할 데이터로 파인튜닝해 DER로 검증하고, STT와 연동해 상담사와 고객이 구분된 전사 결과가 나오는 파이프라인을 구성
 • 기술: Pyannote, PyTorch, Audio Processing
 인피닉 (INFINIIC)
 AI Engineer/MLOps Engineer  Aug 2022 – Apr 2025
