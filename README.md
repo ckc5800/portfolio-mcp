@@ -23,7 +23,7 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 | 도구 | 하는 일 |
 |---|---|
 | `portfolio_get_profile` | 경력 회사·기간·직급, 학력, 기술 스택, 링크 |
-| `portfolio_list_projects` | 프로젝트 11개 목록. 회사명 필터 지원 |
+| `portfolio_list_projects` | 프로젝트 16개 목록. 회사명 필터 지원(구 사명도 인식) |
 | `portfolio_get_publications` | 논문 7편(제1저자), 특허 2건(제1발명자), 수상 |
 | `portfolio_search` | 기술문서 BM25 검색. 트러블슈팅 과정 같은 세부 내용용 |
 
@@ -32,7 +32,7 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 ## 설계하면서 정한 것들
 
 - 의존성은 `mcp` SDK와 `rank_bm25` 둘뿐이다. 처음엔 임베딩 검색도 고려했는데
-  문서 5편에 청크 80개 규모에서 벡터 검색은 과하다. BM25면 충분하고,
+  문서 5편에 청크 수십 개 규모에서 벡터 검색은 과하다. BM25면 충분하고,
   덕분에 GPU도 외부 API도 없이 clone 후 바로 돈다.
 - 추론은 클라이언트 LLM의 몫이다. 서버는 데이터만 정확하게 내려주면 된다.
 - 확정된 사실(경력, 논문, 수치)은 `profile.json`으로, 서술형 내용은 문서 검색으로
