@@ -17,7 +17,8 @@ MCP Client (Claude 등)
    │  stdio
    ▼
 portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
-   └─────────── 구조화 조회 ── data/profile.json   경력 사실
+   ├─────────── 구조화 조회 ── data/profile.json   경력 사실
+   └─────────── 리소스 노출 ── portfolio://…       문서 전문 읽기
 ```
 
 | 도구 | 하는 일 |
@@ -26,6 +27,13 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 | `portfolio_list_projects` | 프로젝트 16개 목록. 회사명 필터 지원(구 사명도 인식) |
 | `portfolio_get_publications` | 논문 7편(제1저자), 특허 2건(제1발명자), 수상 |
 | `portfolio_search` | 기술문서 BM25 검색. 트러블슈팅 과정 같은 세부 내용용 |
+
+도구 외에 **MCP 리소스**도 6개 노출한다 — 기술문서 전문
+`portfolio://docs/<파일명>` 5개와 구조화 프로필 `portfolio://profile`.
+역할 분담은 이렇다: 검색은 관련 조각을 *찾는* 입구고, 리소스는 문서 전문을
+*읽는* 경로다. 검색 결과가 길어서 `…(이하 생략)`으로 잘려 있으면 클라이언트가
+해당 문서 리소스를 열어 이어 읽으면 된다. 리소스도 검색 인덱스와 같은
+정제본을 내보내므로 두 경로의 내용이 항상 일치한다.
 
 전부 read-only다.
 

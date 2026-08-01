@@ -116,7 +116,7 @@
       "company": "개인 프로젝트",
       "period": "2026.07",
       "role": "개인 구축",
-      "summary": "포트폴리오를 MCP 서버로 노출 — read-only 도구 4개(프로필/프로젝트/논문/BM25 검색), FastMCP stdio, 의존성 2개 경량 설계. rag-agent가 MCP 클라이언트로 소비해 서버·클라이언트 양방향 구현. github.com/ckc5800/portfolio-mcp"
+      "summary": "포트폴리오를 MCP 서버로 노출 — read-only 도구 4개(프로필/프로젝트/논문/BM25 검색) + 문서 전문 리소스 6개, 한글 bigram BM25 검색, FastMCP stdio, 의존성 2개 경량 설계. rag-agent가 MCP 클라이언트로 소비해 서버·클라이언트 양방향 구현. github.com/ckc5800/portfolio-mcp"
     },
     {
       "name": "예지보전 Agent (pdm-agent)",

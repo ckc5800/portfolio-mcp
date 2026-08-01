@@ -6,6 +6,7 @@ from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from pydantic import AnyUrl
 
 SERVER = str(Path(__file__).parent / "server.py")
 
@@ -24,6 +25,27 @@ async def main() -> int:
             if len(tools.tools) != 4:
                 print(f"[FAIL] 도구 수 4개 기대, {len(tools.tools)}개 등록됨")
                 failures += 1
+
+            # 리소스: 문서 5편 + profile.json = 6개
+            resources = await session.list_resources()
+            uris = sorted(str(r.uri) for r in resources.resources)
+            print(f"리소스 {len(uris)}개 등록:")
+            for uri in uris:
+                print(f"  - {uri}")
+            if len(uris) != 6 or "portfolio://profile" not in uris:
+                print(f"[FAIL] 리소스 6개(profile 포함) 기대, {uris}")
+                failures += 1
+
+            # 읽기까지 검증 — 등록만 되고 내용이 빈 리소스면 의미가 없다
+            for uri, check in [
+                ("portfolio://docs/tts-deepdive.md", lambda t: "팝 노이즈" in t),
+                ("portfolio://profile", lambda t: bool(json.loads(t).get("career"))),
+            ]:
+                res = await session.read_resource(AnyUrl(uri))
+                text = res.contents[0].text if res.contents else ""
+                ok = check(text)
+                failures += not ok
+                print(f"[{'OK' if ok else 'FAIL'}] read_resource({uri}) → {len(text)}자")
 
             # 응답이 '왔는지'가 아니라 '내용이 맞는지'를 본다.
             # 이전 버전은 bool(text)만 봐서, 도구가 "결과 없음 + hint"를

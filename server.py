@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Annotated
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.resources import TextResource
 from pydantic import Field
 from rank_bm25 import BM25Okapi
 
@@ -111,19 +112,20 @@ def _tokenize(text: str) -> list[str]:
 
 
 def _load_kb():
-    chunks = []
+    docs, chunks = {}, []
     for path in sorted(DOCS_DIR.glob("*.md")):
         text = _clean_markdown(path.read_text(encoding="utf-8"))
+        docs[path.name] = text
         chunks.extend(_chunk_text(text, path.name))
     chunks = [c for c in chunks if len(c["text"]) >= MIN_CHUNK_CHARS]
     if not chunks:
         # 이대로 두면 BM25Okapi가 ZeroDivisionError를 던진다 — 원인을 말해준다
         raise RuntimeError(f"지식 베이스가 비어 있습니다 — {DOCS_DIR}에 .md 문서가 필요합니다")
     bm25 = BM25Okapi([_tokenize(c["text"]) for c in chunks])
-    return chunks, bm25
+    return docs, chunks, bm25
 
 
-CHUNKS, BM25 = _load_kb()
+DOCS, CHUNKS, BM25 = _load_kb()
 PROFILE = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
 
 
@@ -141,11 +143,45 @@ def _company_matches(query: str, project_company: str) -> bool:
                for c in PROFILE["career"])
 
 
+# ── Resources ────────────────────────────────────────────
+#
+# 검색(portfolio_search)은 관련 조각을 찾는 입구고, 리소스는 문서 전문을
+# 읽는 경로다. 검색 결과가 '…(이하 생략)'으로 잘려 있으면 클라이언트가
+# 해당 문서 리소스를 열어 이어 읽으면 된다. 검색 인덱스와 같은 정제본을
+# 노출해 두 경로의 내용이 항상 일치하게 한다.
+
+def _doc_description(text: str) -> str:
+    """첫 제목 줄을 설명으로 쓴다 — 파일명보다 무슨 문서인지 잘 말해준다."""
+    for line in text.splitlines():
+        if line.startswith("#"):
+            return line.lstrip("# ").strip() + " — 문서 전문"
+    return "포트폴리오 문서 전문"
+
+
+for _name, _text in DOCS.items():
+    mcp.add_resource(TextResource(
+        uri=f"portfolio://docs/{_name}",
+        name=_name,
+        description=_doc_description(_text),
+        mime_type="text/markdown",
+        text=_text,
+    ))
+
+mcp.add_resource(TextResource(
+    uri="portfolio://profile",
+    name="profile.json",
+    description="검증된 경력 사실 전체 — 경력·프로젝트·논문·특허·학력·기술 스택",
+    mime_type="application/json",
+    text=json.dumps(PROFILE, ensure_ascii=False, indent=2),
+))
+
+
 def _snippet(text: str, limit: int = 700) -> str:
     """긴 청크는 잘라서 반환하되, 잘렸다는 사실을 숨기지 않는다.
 
     말없이 자르면 모델이 문장이 중간에 끝난 걸 데이터 오류로 오해할 수 있다.
-    표식이 있으면 필요할 때 다른 키워드로 이어서 검색하면 된다는 걸 안다.
+    표식이 있으면 문서 리소스(portfolio://docs/<source>)로 이어 읽으면
+    된다는 걸 안다.
     """
     return text if len(text) <= limit else text[:limit] + " …(이하 생략)"
 
