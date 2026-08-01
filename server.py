@@ -186,6 +186,49 @@ def _snippet(text: str, limit: int = 700) -> str:
     return text if len(text) <= limit else text[:limit] + " …(이하 생략)"
 
 
+# ── Prompts ──────────────────────────────────────────────
+#
+# 도구·리소스에 이어 MCP의 세 번째 프리미티브. 클라이언트 UI가 사용자에게
+# 노출하는 진입점 템플릿으로, 어떤 도구를 어떤 순서로 쓸지 안내한다.
+# 서버가 자기 도구의 올바른 사용법을 함께 배포하는 셈이다.
+
+@mcp.prompt(name="candidate_briefing", title="후보 브리핑")
+def candidate_briefing(focus: str = "") -> str:
+    """채용 담당자 관점의 이윤선 후보 브리핑을 작성하게 한다.
+
+    focus: 집중할 영역 (예: 'MLOps', 'TTS', '리더십'). 빈 값이면 전체.
+    """
+    focus_line = f"특히 '{focus}' 관련 경험을 중심으로 봐 주세요.\n" if focus else ""
+    return (
+        "이윤선(AI 엔지니어) 후보의 포트폴리오를 조사해 채용 담당자용 "
+        "브리핑을 작성해 주세요.\n" + focus_line +
+        "\n진행 순서:\n"
+        "1. portfolio_get_profile — 경력·학력·기술 스택 전체 맥락\n"
+        "2. portfolio_list_projects — 프로젝트 목록에서 대표 성과 선별\n"
+        "3. portfolio_search — 선별한 성과의 기술적 세부(의사결정, 트러블슈팅) 확인\n"
+        "4. portfolio_get_publications — 논문·특허·수상\n"
+        "\n작성 규칙: 도구가 반환한 검증된 사실과 수치만 인용하고, 수치에는 "
+        "출처 프로젝트를 함께 적어 주세요. 추측은 추측이라고 표시해 주세요."
+    )
+
+
+@mcp.prompt(name="tech_deep_dive", title="기술 딥다이브")
+def tech_deep_dive(topic: str) -> str:
+    """특정 기술 주제에서 이윤선이 실제로 한 일을 깊게 조사하게 한다.
+
+    topic: 조사할 주제 (예: 'TTFB 최적화', 'Kubernetes', '스트리밍 팝 노이즈').
+    """
+    return (
+        f"이윤선의 포트폴리오에서 '{topic}' 관련 경험을 깊게 조사해 주세요.\n\n"
+        f"1. portfolio_search로 '{topic}'을(를) 검색하고, 결과가 부족하면 "
+        "연관 키워드로 2~3회 재검색해 주세요.\n"
+        "2. 검색 결과가 '…(이하 생략)'으로 잘려 있으면 해당 문서 리소스 "
+        "portfolio://docs/<source>를 열어 전문을 읽어 주세요.\n"
+        "3. 문제 상황 → 접근 → 결과(수치) 구조로 정리해 주세요.\n\n"
+        "문서에 없는 내용은 지어내지 말고 없다고 말해 주세요."
+    )
+
+
 # ── 도구 출력 스키마 ─────────────────────────────────────
 #
 # dict를 TypedDict 타입으로 반환하면 FastMCP가 텍스트 JSON과 함께

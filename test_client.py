@@ -47,6 +47,22 @@ async def main() -> int:
                 failures += not ok
                 print(f"[{'OK' if ok else 'FAIL'}] read_resource({uri}) → {len(text)}자")
 
+            # 프롬프트: candidate_briefing, tech_deep_dive
+            prompts = await session.list_prompts()
+            print(f"프롬프트 {len(prompts.prompts)}개 등록:")
+            for p in prompts.prompts:
+                print(f"  - {p.name}")
+            if len(prompts.prompts) != 2:
+                print(f"[FAIL] 프롬프트 2개 기대, {len(prompts.prompts)}개 등록됨")
+                failures += 1
+
+            # 인자가 본문에 실제로 들어가고, 도구 사용 안내가 포함되는지
+            gp = await session.get_prompt("tech_deep_dive", {"topic": "TTFB 최적화"})
+            ptext = gp.messages[0].content.text if gp.messages else ""
+            ok = "TTFB 최적화" in ptext and "portfolio_search" in ptext
+            failures += not ok
+            print(f"[{'OK' if ok else 'FAIL'}] get_prompt(tech_deep_dive) → {len(ptext)}자")
+
             # 응답이 '왔는지'가 아니라 '내용이 맞는지'를 본다.
             # 이전 버전은 bool(text)만 봐서, 도구가 "결과 없음 + hint"를
             # 돌려줘도 통과했다 — 실제로 회사명 필터가 깨져 있었는데

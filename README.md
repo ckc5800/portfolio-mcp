@@ -18,7 +18,8 @@ MCP Client (Claude 등)
    ▼
 portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
    ├─────────── 구조화 조회 ── data/profile.json   경력 사실
-   └─────────── 리소스 노출 ── portfolio://…       문서 전문 읽기
+   ├─────────── 리소스 노출 ── portfolio://…       문서 전문 읽기
+   └─────────── 프롬프트 2개 ─ 브리핑·딥다이브     도구 사용 안내 템플릿
 ```
 
 | 도구 | 하는 일 |
@@ -38,6 +39,12 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 *읽는* 경로다. 검색 결과가 길어서 `…(이하 생략)`으로 잘려 있으면 클라이언트가
 해당 문서 리소스를 열어 이어 읽으면 된다. 리소스도 검색 인덱스와 같은
 정제본을 내보내므로 두 경로의 내용이 항상 일치한다.
+
+**MCP 프롬프트**도 2개 제공한다 — `candidate_briefing`(채용 담당자용 브리핑,
+focus 인자로 영역 지정)과 `tech_deep_dive`(주제별 기술 딥다이브, 재검색과
+리소스 이어읽기 절차 포함). 프롬프트는 어떤 도구를 어떤 순서로 쓸지 안내하는
+템플릿이라, 서버가 자기 도구의 올바른 사용법을 함께 배포하는 셈이다. 이로써
+MCP 3대 프리미티브(도구·리소스·프롬프트)를 모두 구현한다.
 
 전부 read-only다.
 
@@ -101,7 +108,7 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 python -m venv .venv && .venv\Scripts\activate
 pip install -r requirements.txt
 
-python test_client.py   # 서버 기동 + 도구 4개 호출 스모크 테스트
+python test_client.py   # 서버 기동 + 도구·리소스·프롬프트 전부 실제 호출하는 스모크 테스트
 ```
 
 ## Claude에 연결
