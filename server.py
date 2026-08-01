@@ -12,8 +12,14 @@ import re
 from pathlib import Path
 from typing import Annotated, Any, NotRequired, TypedDict
 
-from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.resources import TextResource
+# mcp 2.0이 FastMCP를 MCPServer로 개명하고 모듈을 옮겼다(fastmcp → mcpserver).
+# 데코레이터·리소스 API 형태는 같아서 import만 흡수하면 양쪽 메이저에서 돈다.
+try:                                     # mcp >= 2.0
+    from mcp.server.mcpserver import MCPServer as FastMCP
+    from mcp.server.mcpserver.resources import TextResource
+except ImportError:                      # mcp 1.x
+    from mcp.server.fastmcp import FastMCP
+    from mcp.server.fastmcp.resources import TextResource
 from pydantic import Field
 from rank_bm25 import BM25Okapi
 

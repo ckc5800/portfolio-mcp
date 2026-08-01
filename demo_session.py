@@ -6,7 +6,6 @@ from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from pydantic import AnyUrl
 
 SERVER = str(Path(__file__).parent / "server.py")
 
@@ -27,7 +26,9 @@ async def main():
                 print(f"> {label}")
                 print(f"  [tool call] {name}({json.dumps(args, ensure_ascii=False)})")
                 result = await session.call_tool(name, args)
-                return result.structuredContent   # structured output — 텍스트 파싱 불필요
+                # structured output — 텍스트 파싱 불필요 (mcp 2.0은 snake_case)
+                return getattr(result, "structured_content", None) \
+                    or result.structuredContent
 
             d = await call("portfolio_get_profile", {}, "이윤선이 누구야?")
             print(f"  → {d['name']} — {d['title']}")
@@ -42,7 +43,7 @@ async def main():
 
             print("> TTS 딥다이브 문서 전문 읽어줘")
             print("  [resource] portfolio://docs/tts-deepdive.md")
-            res = await session.read_resource(AnyUrl("portfolio://docs/tts-deepdive.md"))
+            res = await session.read_resource("portfolio://docs/tts-deepdive.md")
             text = res.contents[0].text
             print(f"  → 마크다운 전문 {len(text):,}자 — 검색 결과가 잘렸을 때 이어 읽는 경로")
             print()

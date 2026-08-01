@@ -6,9 +6,17 @@ from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from pydantic import AnyUrl
 
 SERVER = str(Path(__file__).parent / "server.py")
+
+
+def _attr(obj, *names):
+    """mcp 2.0이 결과 필드를 snake_case로 바꿨다(isError → is_error 등).
+    설치된 메이저에 있는 쪽을 읽는다."""
+    for n in names:
+        if hasattr(obj, n):
+            return getattr(obj, n)
+    raise AttributeError(f"{type(obj).__name__}: {names} 중 어느 것도 없음")
 
 
 async def main() -> int:
@@ -41,7 +49,8 @@ async def main() -> int:
                 ("portfolio://docs/tts-deepdive.md", lambda t: "팝 노이즈" in t),
                 ("portfolio://profile", lambda t: bool(json.loads(t).get("career"))),
             ]:
-                res = await session.read_resource(AnyUrl(uri))
+                # str로 넘긴다 — mcp 1.x는 AnyUrl로 코어션하고 2.x는 str을 기대한다
+                res = await session.read_resource(uri)
                 text = res.contents[0].text if res.contents else ""
                 ok = check(text)
                 failures += not ok
@@ -90,8 +99,9 @@ async def main() -> int:
                 result = await session.call_tool(name, args)
                 text = result.content[0].text if result.content else ""
                 # 텍스트 JSON과 structuredContent가 둘 다 내려와야 한다
-                ok = (bool(text) and not result.isError
-                      and result.structuredContent is not None)
+                ok = (bool(text) and not _attr(result, "is_error", "isError")
+                      and _attr(result, "structured_content",
+                                "structuredContent") is not None)
                 if ok:
                     try:
                         ok = check(json.loads(text))
