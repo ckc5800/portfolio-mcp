@@ -10,7 +10,7 @@ MCP 클라이언트(Claude Desktop, Claude Code 등)가 포트폴리오 문서 �
 import json
 import re
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any, NotRequired, TypedDict
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.resources import TextResource
@@ -186,6 +186,38 @@ def _snippet(text: str, limit: int = 700) -> str:
     return text if len(text) <= limit else text[:limit] + " …(이하 생략)"
 
 
+# ── 도구 출력 스키마 ─────────────────────────────────────
+#
+# dict를 TypedDict 타입으로 반환하면 FastMCP가 텍스트 JSON과 함께
+# structuredContent를 내려주고, 반환 타입에서 outputSchema를 만들어
+# 클라이언트에 공개한다. 필드는 profile.json의 실제 키와 맞춰야 한다 —
+# 필수 필드가 빠지면 출력 검증에서 걸려 스모크 테스트가 빨간불이 된다.
+
+class SearchHit(TypedDict):
+    source: str
+    score: float
+    text: str
+
+
+class SearchOutput(TypedDict):
+    results: list[SearchHit]
+    # str만 쓰면 이 SDK가 생략된 키를 None으로 채워 넣어 출력 검증에 걸린다
+    hint: NotRequired[str | None]
+
+
+class Project(TypedDict):
+    name: str
+    company: str
+    period: str
+    role: str
+    summary: str
+
+
+class ProjectsOutput(TypedDict):
+    projects: list[Project]
+    hint: NotRequired[str | None]
+
+
 # ── Tools ────────────────────────────────────────────────
 
 @mcp.tool(
@@ -204,7 +236,7 @@ async def portfolio_search(
         min_length=1, max_length=200)],
     top_k: Annotated[int, Field(
         description="반환할 문서 청크 수", ge=1, le=10)] = 4,
-) -> str:
+) -> SearchOutput:
     """이윤선의 포트폴리오/기술문서에서 관련 내용을 키워드(BM25) 검색한다.
 
     프로젝트 상세, 기술적 의사결정, 트러블슈팅 과정 등 profile 도구가
@@ -220,12 +252,12 @@ async def portfolio_search(
         for i in ranked[:top_k] if scores[i] > 0
     ]
     if not results:
-        return json.dumps({
+        return {
             "results": [],
             "hint": "관련 문서를 찾지 못했습니다. 다른 키워드로 재검색하거나 "
                     "portfolio_list_projects로 프로젝트 목록을 먼저 확인하세요.",
-        }, ensure_ascii=False)
-    return json.dumps({"results": results}, ensure_ascii=False)
+        }
+    return {"results": results}
 
 
 @mcp.tool(
@@ -242,7 +274,7 @@ async def portfolio_list_projects(
     company: Annotated[str, Field(
         description="회사명으로 필터링 (예: '에이아이세스', '인피닉'). 빈 값이면 전체 반환",
         max_length=50)] = "",
-) -> str:
+) -> ProjectsOutput:
     """이윤선의 전체 프로젝트 목록(회사, 기간, 역할, 성과 요약)을 반환한다.
 
     검증된 수치·성과만 수록되어 있다. 특정 프로젝트의 기술 세부사항이
@@ -253,11 +285,11 @@ async def portfolio_list_projects(
         projects = [p for p in projects if _company_matches(company, p["company"])]
         if not projects:
             companies = sorted({p["company"] for p in PROFILE["projects"]})
-            return json.dumps({
+            return {
                 "projects": [],
                 "hint": f"'{company}' 프로젝트가 없습니다. 보유 회사: {companies}",
-            }, ensure_ascii=False)
-    return json.dumps({"projects": projects}, ensure_ascii=False)
+            }
+    return {"projects": projects}
 
 
 @mcp.tool(
@@ -270,13 +302,13 @@ async def portfolio_list_projects(
         "openWorldHint": False,
     },
 )
-async def portfolio_get_publications() -> str:
+async def portfolio_get_publications() -> dict[str, Any]:
     """이윤선의 논문(제1저자 7편), 특허(제1발명자 2건), 수상 내역을 반환한다."""
-    return json.dumps({
+    return {
         "publications": PROFILE["publications"],
         "patents": PROFILE["patents"],
         "award": PROFILE["award"],
-    }, ensure_ascii=False)
+    }
 
 
 @mcp.tool(
@@ -289,19 +321,19 @@ async def portfolio_get_publications() -> str:
         "openWorldHint": False,
     },
 )
-async def portfolio_get_profile() -> str:
+async def portfolio_get_profile() -> dict[str, Any]:
     """이윤선의 기본 프로필(소개, 경력 회사·기간·직급, 학력, 기술 스택, 링크)을 반환한다.
 
     대화 시작 시 전체 맥락을 잡는 용도로 먼저 호출하기에 적합하다.
     """
-    return json.dumps({
+    return {
         "name": PROFILE["name"],
         "title": PROFILE["title"],
         "career": PROFILE["career"],
         "education": PROFILE["education"],
         "skills": PROFILE["skills"],
         "links": PROFILE["links"],
-    }, ensure_ascii=False)
+    }
 
 
 if __name__ == "__main__":

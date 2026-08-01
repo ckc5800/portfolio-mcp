@@ -73,7 +73,9 @@ async def main() -> int:
             for name, args, check in cases:
                 result = await session.call_tool(name, args)
                 text = result.content[0].text if result.content else ""
-                ok = bool(text) and not result.isError
+                # 텍스트 JSON과 structuredContent가 둘 다 내려와야 한다
+                ok = (bool(text) and not result.isError
+                      and result.structuredContent is not None)
                 if ok:
                     try:
                         ok = check(json.loads(text))

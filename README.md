@@ -28,6 +28,10 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 | `portfolio_get_publications` | 논문 7편(제1저자), 특허 2건(제1발명자), 수상 |
 | `portfolio_search` | 기술문서 BM25 검색. 트러블슈팅 과정 같은 세부 내용용 |
 
+도구 4개는 텍스트 JSON과 함께 **structuredContent**도 내려주고, 반환
+타입(TypedDict)에서 생성한 **outputSchema**를 클라이언트에 공개한다 —
+클라이언트가 파싱 없이 스키마가 보장된 결과를 바로 쓸 수 있다.
+
 도구 외에 **MCP 리소스**도 6개 노출한다 — 기술문서 전문
 `portfolio://docs/<파일명>` 5개와 구조화 프로필 `portfolio://profile`.
 역할 분담은 이렇다: 검색은 관련 조각을 *찾는* 입구고, 리소스는 문서 전문을
