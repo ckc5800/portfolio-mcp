@@ -80,9 +80,34 @@ def _chunk_text(text: str, source: str) -> list[dict]:
     return chunks
 
 
+# 소문자화 이후에 매칭하므로 ASCII 클래스는 소문자만 있으면 된다.
+# 'vllm-omni', 'rank_bm25'처럼 구두점으로 이어진 식별자는 하나의 런으로 잡는다.
+_ASCII_RUN = r"[0-9a-z]+(?:[._-][0-9a-z]+)*"
+_HANGUL_RUN = r"[가-힣]+"
+_RUNS = re.compile(f"{_ASCII_RUN}|{_HANGUL_RUN}")
+_SPLITTABLE = re.compile(r"[._-]")
+
+
 def _tokenize(text: str) -> list[str]:
-    """한/영/숫자 토큰 추출 (소문자화). BM25용 단순 토크나이저."""
-    return re.findall(r"[가-힣]+|[a-zA-Z]+|\d+", text.lower())
+    """런(run) 단위 토큰 + 한글 문자 bigram. BM25용 토크나이저.
+
+    단어 단위 토큰만 쓰면 '쿠버네티스로'와 '쿠버네티스'가 다른 토큰이라
+    조사가 붙은 한국어 질의에서 검색이 0건이 된다 — 실제로
+    '쿠버네티스로 뭐 했어', '최적화를'이 아무것도 못 찾았다. 한글 런에
+    문자 bigram을 함께 넣으면 두 표기가 bigram으로 겹쳐 해결된다.
+    portfolio-rag-agent의 bm25_tokenize와 같은 규칙이다(복제 이유는
+    상단 정제 규칙 주석과 같다 — 의존성 2개 단독 실행이 목표).
+    """
+    tokens: list[str] = []
+    for run in _RUNS.findall(text.lower()):
+        tokens.append(run)
+        if "가" <= run[0] <= "힣":
+            if len(run) >= 2:                      # 한글만 bigram
+                tokens += [run[i:i + 2] for i in range(len(run) - 1)]
+        elif _SPLITTABLE.search(run):
+            # 'rank_bm25' → 부분 토큰도 함께 (통째 토큰은 유지)
+            tokens += [p for p in _SPLITTABLE.split(run) if p]
+    return tokens
 
 
 def _load_kb():
@@ -91,6 +116,9 @@ def _load_kb():
         text = _clean_markdown(path.read_text(encoding="utf-8"))
         chunks.extend(_chunk_text(text, path.name))
     chunks = [c for c in chunks if len(c["text"]) >= MIN_CHUNK_CHARS]
+    if not chunks:
+        # 이대로 두면 BM25Okapi가 ZeroDivisionError를 던진다 — 원인을 말해준다
+        raise RuntimeError(f"지식 베이스가 비어 있습니다 — {DOCS_DIR}에 .md 문서가 필요합니다")
     bm25 = BM25Okapi([_tokenize(c["text"]) for c in chunks])
     return chunks, bm25
 
@@ -111,6 +139,15 @@ def _company_matches(query: str, project_company: str) -> bool:
         return True
     return any(query in c["company"] and project_company in c["company"]
                for c in PROFILE["career"])
+
+
+def _snippet(text: str, limit: int = 700) -> str:
+    """긴 청크는 잘라서 반환하되, 잘렸다는 사실을 숨기지 않는다.
+
+    말없이 자르면 모델이 문장이 중간에 끝난 걸 데이터 오류로 오해할 수 있다.
+    표식이 있으면 필요할 때 다른 키워드로 이어서 검색하면 된다는 걸 안다.
+    """
+    return text if len(text) <= limit else text[:limit] + " …(이하 생략)"
 
 
 # ── Tools ────────────────────────────────────────────────
@@ -143,7 +180,7 @@ async def portfolio_search(
     results = [
         {"source": CHUNKS[i]["source"],
          "score": round(float(scores[i]), 2),
-         "text": CHUNKS[i]["text"][:700]}
+         "text": _snippet(CHUNKS[i]["text"])}
         for i in ranked[:top_k] if scores[i] > 0
     ]
     if not results:
@@ -202,7 +239,7 @@ async def portfolio_get_publications() -> str:
     return json.dumps({
         "publications": PROFILE["publications"],
         "patents": PROFILE["patents"],
-        "award": "우수논문상 — 국방기술학회 (2023.11)",
+        "award": PROFILE["award"],
     }, ensure_ascii=False)
 
 

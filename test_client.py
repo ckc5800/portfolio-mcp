@@ -42,8 +42,11 @@ async def main() -> int:
                 ("portfolio_list_projects", {"company": "에이아이세스"}, has_projects),
                 ("portfolio_list_projects", {"company": "인피닉"}, has_projects),
                 ("portfolio_get_publications", {},
-                 lambda d: len(d.get("patents", [])) == 2),
+                 lambda d: len(d.get("patents", [])) == 2 and bool(d.get("award"))),
                 ("portfolio_search", {"query": "TTFB 최적화", "top_k": 2}, has_results),
+                # 조사가 붙은 질의 — bigram 토크나이저 이전에는 0건이었다
+                ("portfolio_search", {"query": "쿠버네티스로 뭐 했어", "top_k": 3},
+                 has_results),
             ]
             for name, args, check in cases:
                 result = await session.call_tool(name, args)
