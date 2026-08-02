@@ -10,7 +10,7 @@
   <g fill="#cdd6f4">
     <text x="24" y="62" fill="#9399b2" opacity="0">$ python demo_session.py
       <animate attributeName="opacity" from="0" to="1" begin="0.3s" dur="0.2s" fill="freeze"/></text>
-    <text x="24" y="86" fill="#9399b2" opacity="0">MCP 서버 연결됨 — 도구 4개 · 리소스 6개 · 프롬프트 2개
+    <text x="24" y="86" fill="#9399b2" opacity="0">MCP 서버 연결됨 — 도구 7개 · 리소스 6개 · 프롬프트 2개
       <animate attributeName="opacity" from="0" to="1" begin="0.9s" dur="0.2s" fill="freeze"/></text>
 
     <text x="24" y="122" font-weight="bold" opacity="0">&gt; 이윤선이 누구야?

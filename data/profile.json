@@ -10,17 +10,20 @@
     {
       "company": "MiCo AI (구 에이아이세스)",
       "period": "2025.04 ~ 현재",
-      "role": "Manager"
+      "role": "Manager",
+      "homepage": "https://micoai.ai"
     },
     {
       "company": "인피닉 (INFINIIC)",
       "period": "2022.08 ~ 2025.04",
-      "role": "AI Engineer/MLOps Engineer"
+      "role": "AI Engineer/MLOps Engineer",
+      "homepage": "https://infiniq.co.kr"
     },
     {
       "company": "이든티앤에스 (EDEN T&S)",
       "period": "2022.04 ~ 2022.08",
-      "role": "AI Engineer"
+      "role": "AI Engineer",
+      "homepage": "https://edentns.com"
     },
     {
       "company": "큐헷지 (QUHEDGE)",
@@ -30,7 +33,8 @@
     {
       "company": "KISTI",
       "period": "2017.10 ~ 2018.01",
-      "role": "Part-time"
+      "role": "Part-time",
+      "homepage": "https://www.kisti.re.kr"
     }
   ],
   "projects": [

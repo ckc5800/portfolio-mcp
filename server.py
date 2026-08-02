@@ -46,6 +46,9 @@ mcp = FastMCP(
         "프로젝트를 고른 뒤, 기술 세부사항은 portfolio_search로 검색하라. "
         "검색 결과가 '…(이하 생략)'으로 잘려 있으면 portfolio://docs/<source> "
         "리소스에서 문서 전문을 이어 읽어라. "
+        "최근 활동은 portfolio_get_github_activity(GitHub)·"
+        "portfolio_get_blog_posts(블로그)로 실시간 조회하고, 재직 회사의 "
+        "공식 홈페이지는 portfolio_get_company_info로 확인하라. "
         "경력·수치·사실은 도구가 반환한 것만 인용하라."
     ),
 )
@@ -510,6 +513,40 @@ async def portfolio_get_blog_posts() -> dict[str, Any]:
         return {"posts": [], "hint": f"블로그 RSS 조회 실패({type(e).__name__}). "
                 f"블로그 주소를 안내하세요: {PROFILE['links']['blog']}"}
     return {"posts": posts, "blog": PROFILE["links"]["blog"]}
+
+
+@mcp.tool(
+    name="portfolio_get_company_info",
+    annotations={
+        "title": "재직 회사 정보 조회",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def portfolio_get_company_info(
+    company: Annotated[str, Field(
+        description="회사명으로 필터링 (예: '인피닉', '에이아이세스'). 빈 값이면 전체 반환",
+        max_length=50)] = "",
+) -> dict[str, Any]:
+    """이윤선이 다닌 회사의 재직 정보(기간·직급)와 검증된 공식 홈페이지를 반환한다.
+
+    회사의 최신 사업 현황·채용 정보는 이 서버의 데이터 범위 밖이다 —
+    반환된 homepage URL을 웹에서 직접 열람하거나 검색하라. homepage가
+    없는 회사는 공식 사이트를 확인하지 못한 곳이다(추측해서 채우지 않았다).
+    """
+    companies = [c for c in PROFILE["career"]
+                 if not company or company in c["company"]]
+    if not companies:
+        names = [c["company"] for c in PROFILE["career"]]
+        return {"companies": [],
+                "hint": f"'{company}' 재직 이력이 없습니다. 재직 회사: {names}"}
+    return {
+        "companies": companies,
+        "hint": "회사의 최신 정보(사업 현황, 뉴스, 채용)는 homepage를 "
+                "직접 열람하거나 웹 검색으로 확인하세요.",
+    }
 
 
 if __name__ == "__main__":

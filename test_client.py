@@ -37,8 +37,8 @@ async def main() -> int:
             print(f"도구 {len(tools.tools)}개 등록:")
             for t in tools.tools:
                 print(f"  - {t.name}")
-            if len(tools.tools) != 6:
-                print(f"[FAIL] 도구 수 6개 기대, {len(tools.tools)}개 등록됨")
+            if len(tools.tools) != 7:
+                print(f"[FAIL] 도구 수 7개 기대, {len(tools.tools)}개 등록됨")
                 failures += 1
 
             # 리소스: 문서 5편 + profile.json = 6개
@@ -116,6 +116,9 @@ async def main() -> int:
                  lambda d: bool(d.get("repos")) or bool(d.get("hint"))),
                 ("portfolio_get_blog_posts", {},
                  lambda d: bool(d.get("posts")) or bool(d.get("hint"))),
+                # 검증된 공식 홈페이지가 재직 정보와 함께 와야 한다
+                ("portfolio_get_company_info", {"company": "인피닉"},
+                 lambda d: "infiniq" in d["companies"][0].get("homepage", "")),
             ]
             for name, args, check in cases:
                 result = await session.call_tool(name, args)
