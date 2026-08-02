@@ -30,7 +30,19 @@ PROFILE_PATH = BASE_DIR / "data" / "profile.json"
 CHUNK_SIZE = 800
 MIN_CHUNK_CHARS = 30   # 구분선('---')·제목 줄만 남은 조각은 인덱싱하지 않는다
 
-mcp = FastMCP("portfolio_mcp")
+# instructions는 initialize 응답에 실려, 클라이언트 LLM이 프롬프트를 열지
+# 않아도 서버 사용법을 안다. 프롬프트(candidate_briefing 등)의 요약판이다.
+mcp = FastMCP(
+    "portfolio_mcp",
+    instructions=(
+        "AI 엔지니어 이윤선의 포트폴리오 서버(read-only). "
+        "portfolio_get_profile로 전체 맥락을 잡고, portfolio_list_projects로 "
+        "프로젝트를 고른 뒤, 기술 세부사항은 portfolio_search로 검색하라. "
+        "검색 결과가 '…(이하 생략)'으로 잘려 있으면 portfolio://docs/<source> "
+        "리소스에서 문서 전문을 이어 읽어라. "
+        "경력·수치·사실은 도구가 반환한 것만 인용하라."
+    ),
+)
 
 
 # ── 원문 정제 ────────────────────────────────────────────

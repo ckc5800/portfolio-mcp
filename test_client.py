@@ -24,7 +24,13 @@ async def main() -> int:
     params = StdioServerParameters(command=sys.executable, args=["-X", "utf8", SERVER])
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
-            await session.initialize()
+            init = await session.initialize()
+
+            # instructions가 initialize 응답에 실려 오는지
+            ok = bool(init.instructions) and "portfolio_search" in init.instructions
+            failures += not ok
+            print(f"[{'OK' if ok else 'FAIL'}] initialize.instructions → "
+                  f"{len(init.instructions or '')}자")
 
             tools = await session.list_tools()
             print(f"도구 {len(tools.tools)}개 등록:")
