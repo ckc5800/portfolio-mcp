@@ -7,10 +7,15 @@ MCP 클라이언트(Claude Desktop, Claude Code 등)가 포트폴리오 문서 �
 - 구조화 정보: data/profile.json (검증된 사실만 수록)
 - Transport: stdio (로컬 서버)
 """
+import asyncio
+import html
 import json
 import re
+import time
+import urllib.request
 from pathlib import Path
 from typing import Annotated, Any, NotRequired, TypedDict
+from xml.etree import ElementTree
 
 # mcp 2.0이 FastMCP를 MCPServer로 개명하고 모듈을 옮겼다(fastmcp → mcpserver).
 # 데코레이터·리소스 API 형태는 같아서 import만 흡수하면 양쪽 메이저에서 돈다.
@@ -266,6 +271,34 @@ async def _complete(ref, argument, context):
     prefix = argument.value.lower()
     values = [v for v in _COMPLETION_VOCAB if prefix in v.lower()]
     return Completion(values=values[:20], total=len(values))
+
+
+# ── 실시간 조회 (표준 라이브러리만 사용 — 의존성 2개 유지) ──
+#
+# 정적 사실은 profile.json이지만, "요즘도 활동하나?"는 웹에서만 답할 수
+# 있다. GitHub·블로그는 이윤선 본인의 공개 데이터라 이 서버의 범위
+# 안이다. 일반 웹 검색은 넣지 않는다 — 클라이언트가 이미 갖고 있고,
+# 이 서버는 이윤선 데이터만 정확하게 내려주는 것이 역할이다.
+
+_HTTP_TIMEOUT = 6
+_CACHE_TTL = 600          # GitHub 무인증 60회/시 제한 대비
+_http_cache: dict[str, tuple[float, str]] = {}
+
+
+def _http_get(url: str) -> str:
+    """TTL 캐시를 얹은 GET. blocking이므로 도구에서는 to_thread로 감싼다."""
+    now = time.time()
+    hit = _http_cache.get(url)
+    if hit and hit[0] > now:
+        return hit[1]
+    req = urllib.request.Request(url, headers={"User-Agent": "portfolio-mcp"})
+    with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+        body = resp.read().decode("utf-8", errors="replace")
+    _http_cache[url] = (now + _CACHE_TTL, body)
+    return body
+
+
+# ── 도구 출력 스키마 ─────────────────────────────────────
 #
 # dict를 TypedDict 타입으로 반환하면 FastMCP가 텍스트 JSON과 함께
 # structuredContent를 내려주고, 반환 타입에서 outputSchema를 만들어
@@ -413,6 +446,70 @@ async def portfolio_get_profile() -> dict[str, Any]:
         "skills": PROFILE["skills"],
         "links": PROFILE["links"],
     }
+
+
+@mcp.tool(
+    name="portfolio_get_github_activity",
+    annotations={
+        "title": "GitHub 활동 실시간 조회",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+)
+async def portfolio_get_github_activity() -> dict[str, Any]:
+    """이윤선의 GitHub 공개 저장소를 실시간 조회한다 (최근 푸시 순 10개).
+
+    profile의 정적 사실과 달리 '요즘도 활동하는가'를 오늘 자 데이터로
+    보여준다. 조회 실패 시 hint와 함께 빈 결과를 반환한다 — 그 경우
+    portfolio_list_projects의 정적 데이터로 답하라.
+    """
+    user = PROFILE["links"]["github"].rstrip("/").rsplit("/", 1)[-1]
+    url = f"https://api.github.com/users/{user}/repos?sort=pushed&per_page=10"
+    try:
+        repos = json.loads(await asyncio.to_thread(_http_get, url))
+    except Exception as e:
+        return {"repos": [], "hint": f"GitHub 조회 실패({type(e).__name__}). "
+                "portfolio_list_projects의 정적 데이터로 답하세요."}
+    return {"repos": [
+        {"name": r["name"], "description": r["description"],
+         "language": r["language"], "stars": r["stargazers_count"],
+         "pushed_at": r["pushed_at"], "url": r["html_url"]}
+        for r in repos
+    ]}
+
+
+@mcp.tool(
+    name="portfolio_get_blog_posts",
+    annotations={
+        "title": "블로그 최신 글 실시간 조회",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+)
+async def portfolio_get_blog_posts() -> dict[str, Any]:
+    """이윤선의 기술 블로그 최신 글을 RSS로 실시간 조회한다 (최대 5건).
+
+    조회 실패 시 hint와 함께 빈 결과를 반환한다 — 그 경우 links.blog
+    주소를 안내하라.
+    """
+    url = PROFILE["links"]["blog"].rstrip("/") + "/rss"
+    try:
+        root = ElementTree.fromstring(await asyncio.to_thread(_http_get, url))
+        posts = [
+            # 티스토리 RSS는 제목을 이중 인코딩한다(&quot; 등) — 한 번 되돌린다
+            {"title": html.unescape(i.findtext("title") or ""),
+             "link": i.findtext("link"),
+             "published": i.findtext("pubDate")}
+            for i in root.iter("item")
+        ][:5]
+    except Exception as e:
+        return {"posts": [], "hint": f"블로그 RSS 조회 실패({type(e).__name__}). "
+                f"블로그 주소를 안내하세요: {PROFILE['links']['blog']}"}
+    return {"posts": posts, "blog": PROFILE["links"]["blog"]}
 
 
 if __name__ == "__main__":

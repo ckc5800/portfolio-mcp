@@ -37,8 +37,8 @@ async def main() -> int:
             print(f"도구 {len(tools.tools)}개 등록:")
             for t in tools.tools:
                 print(f"  - {t.name}")
-            if len(tools.tools) != 4:
-                print(f"[FAIL] 도구 수 4개 기대, {len(tools.tools)}개 등록됨")
+            if len(tools.tools) != 6:
+                print(f"[FAIL] 도구 수 6개 기대, {len(tools.tools)}개 등록됨")
                 failures += 1
 
             # 리소스: 문서 5편 + profile.json = 6개
@@ -110,6 +110,12 @@ async def main() -> int:
                 # 조사가 붙은 질의 — bigram 토크나이저 이전에는 0건이었다
                 ("portfolio_search", {"query": "쿠버네티스로 뭐 했어", "top_k": 3},
                  has_results),
+                # 실시간 도구는 오프라인 CI에서도 깨지지 않아야 한다 —
+                # 데이터가 오거나, 폴백을 안내하는 hint가 오거나 (graceful)
+                ("portfolio_get_github_activity", {},
+                 lambda d: bool(d.get("repos")) or bool(d.get("hint"))),
+                ("portfolio_get_blog_posts", {},
+                 lambda d: bool(d.get("posts")) or bool(d.get("hint"))),
             ]
             for name, args, check in cases:
                 result = await session.call_tool(name, args)
