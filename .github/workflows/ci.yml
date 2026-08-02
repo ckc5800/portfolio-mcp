@@ -5,10 +5,17 @@ on: [push, pull_request]
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # mcp 2.0이 모듈 경로와 필드명을 바꿨다 — 양쪽 메이저 호환을
+        # 주장하려면 커밋마다 둘 다에서 검증해야 한다
+        mcp: ["mcp>=1.2,<2", "mcp>=2"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - run: pip install "${{ matrix.mcp }}"
       - run: python test_client.py
