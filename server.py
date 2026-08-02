@@ -20,6 +20,7 @@ try:                                     # mcp >= 2.0
 except ImportError:                      # mcp 1.x
     from mcp.server.fastmcp import FastMCP
     from mcp.server.fastmcp.resources import TextResource
+from mcp.types import Completion
 from pydantic import Field
 from rank_bm25 import BM25Okapi
 
@@ -247,7 +248,24 @@ def tech_deep_dive(topic: str) -> str:
     )
 
 
-# ── 도구 출력 스키마 ─────────────────────────────────────
+# ── Completions ──────────────────────────────────────────
+#
+# 프롬프트 인자(topic, focus) 자동완성. 제안 목록을 profile.json의
+# 프로젝트명·기술 스택에서 뽑으므로 하드코딩 없이 데이터와 항상 일치한다.
+
+_COMPLETION_VOCAB = sorted(
+    {p["name"] for p in PROFILE["projects"]}
+    | {s for group in PROFILE["skills"].values() for s in group}
+)
+
+
+@mcp.completion()
+async def _complete(ref, argument, context):
+    if argument.name not in ("topic", "focus"):
+        return None
+    prefix = argument.value.lower()
+    values = [v for v in _COMPLETION_VOCAB if prefix in v.lower()]
+    return Completion(values=values[:20], total=len(values))
 #
 # dict를 TypedDict 타입으로 반환하면 FastMCP가 텍스트 JSON과 함께
 # structuredContent를 내려주고, 반환 타입에서 outputSchema를 만들어

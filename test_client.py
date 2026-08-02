@@ -6,6 +6,7 @@ from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.types import PromptReference
 
 SERVER = str(Path(__file__).parent / "server.py")
 
@@ -77,6 +78,15 @@ async def main() -> int:
             ok = "TTFB 최적화" in ptext and "portfolio_search" in ptext
             failures += not ok
             print(f"[{'OK' if ok else 'FAIL'}] get_prompt(tech_deep_dive) → {len(ptext)}자")
+
+            # 자동완성: 'TT' → profile.json에서 뽑은 'TTS 프로젝트'가 제안돼야 한다
+            comp = await session.complete(
+                PromptReference(type="ref/prompt", name="tech_deep_dive"),
+                {"name": "topic", "value": "TT"})
+            values = comp.completion.values
+            ok = any("TTS" in v for v in values)
+            failures += not ok
+            print(f"[{'OK' if ok else 'FAIL'}] complete(topic='TT') → {values[:3]}")
 
             # 응답이 '왔는지'가 아니라 '내용이 맞는지'를 본다.
             # 이전 버전은 bool(text)만 봐서, 도구가 "결과 없음 + hint"를
