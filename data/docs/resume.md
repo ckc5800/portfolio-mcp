@@ -49,7 +49,7 @@ Speaker Diarization (2025.04 ~ 2025.07)
 • 배경: 상담 품질을 분석하려면 상담사와 고객의 발화부터 구분해야 했음
 • Pyannote 사전 학습 모델을 공개 화자분할 데이터로 파인튜닝해 DER로 검증하고, STT와 연동해 상담사와 고객이 구분된 전사 결과가 나오는 파이프라인을 구성
 • 기술: Pyannote, PyTorch, Audio Processing
-인피닉 (INFINIIC)
+인피닉 (INFINIQ)
 AI Engineer/MLOps Engineer  Aug 2022 – Apr 2025
 Kubernetes 기반 AI 인프라 (2024.03 ~ 2025.04)
 • 배경: 20개가 넘는 AI 서비스를 수동으로 배포하느라 배포 한 번에 수 시간이 걸렸음
