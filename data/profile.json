@@ -14,7 +14,7 @@
       "homepage": "https://micoai.ai"
     },
     {
-      "company": "인피닉 (INFINIIC)",
+      "company": "인피닉 (INFINIQ)",
       "period": "2022.08 ~ 2025.04",
       "role": "AI Engineer/MLOps Engineer",
       "homepage": "https://infiniq.co.kr"
@@ -43,7 +43,7 @@
       "company": "MiCo AI",
       "period": "2025.09 ~ 현재",
       "role": "PM 및 풀스택 개발",
-      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이. TTFB 2292ms→334ms(85% 단축), 동시 채널 12→24, Throughput 0.68→1.41→~1.7rps, RTF 0.1 이하, CER 3~5%, 32개 언어 지원, ITN 정확도 50.1%→70.9%"
+      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이. TTFB 2292ms→334ms(85% 단축), 동시 스트림 수용 한계 36, Throughput 0.68→1.41→3.09rps, burst p95 TTFB 1,008ms→652ms, RTF 0.1 이하, CER 3~5%, 32개 언어 지원, ITN 정확도 50.1%→70.9% (2026-08-04 엔진 마이그레이션 반영 갱신)"
     },
     {
       "name": "STT 배포",
@@ -120,7 +120,7 @@
       "company": "개인 프로젝트",
       "period": "2026.07",
       "role": "개인 구축",
-      "summary": "포트폴리오를 MCP 서버로 노출 — MCP 3대 프리미티브 구현: read-only 도구 4개(프로필/프로젝트/논문/BM25 검색, structured output) + 문서 전문 리소스 6개 + 프롬프트 2개. 한글 bigram BM25 검색, FastMCP stdio, 의존성 2개 경량 설계. rag-agent가 MCP 클라이언트로 소비해 서버·클라이언트 양방향 구현. github.com/ckc5800/portfolio-mcp"
+      "summary": "포트폴리오를 MCP 서버로 노출 — read-only 도구 7개(프로필/프로젝트/논문/BM25 검색 + GitHub·블로그 실시간 조회, 전 도구 structured output) + 문서 전문 리소스 6개 + 프롬프트 2개 + instructions·completions. 한글 bigram BM25에 청킹 교정을 더해 top1 정답률 6/12→11/12 실측 개선, mcp SDK 1.x·2.x 양쪽 CI 매트릭스 검증, 의존성 2개 경량 설계. rag-agent가 MCP 클라이언트로 소비해 서버·클라이언트 양방향 구현. github.com/ckc5800/portfolio-mcp"
     },
     {
       "name": "예지보전 Agent (pdm-agent)",

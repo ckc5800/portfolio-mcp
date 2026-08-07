@@ -70,6 +70,12 @@ _MD_LINK = re.compile(r"\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)")
 _LEFTOVER_TARGET = re.compile(
     r"\]\((?!https?://)(?:[^()]|\([^()]*\))*%[0-9A-Fa-f]{2}(?:[^()]|\([^()]*\))*\)")
 _HTML_TAG = re.compile(r"</?(?:br|div|span|aside|img|p)\b[^>]*/?>", re.I)
+# 아키텍처 다이어그램의 박스 그리기 문자. 노션 인코딩 노이즈와 같은 계열의
+# 문제인데 방향이 반대다 — 이 문자들은 토큰화되지 않으므로 청크의 글자 수만
+# 부풀린다. 그러면 BM25가 보는 토큰 수는 그대로라 다이어그램 청크가 '아주
+# 짧은 문서'로 취급돼 길이 정규화에서 부당하게 유리해진다(실측: 732자에
+# 토큰 42개, 같은 길이 산문은 토큰 171개). 레이아웃만 지우고 내용은 남긴다.
+_BOX_DRAWING = re.compile(r"[─-╿]+")
 _EXTRA_BLANK = re.compile(r"\n{3,}")
 
 
@@ -90,19 +96,43 @@ def _clean_markdown(text: str) -> str:
     text = _MD_LINK.sub(_strip_notion_link, text)
     text = _LEFTOVER_TARGET.sub("", text)
     text = _HTML_TAG.sub(" ", text)
+    text = _BOX_DRAWING.sub(" ", text)
     return _EXTRA_BLANK.sub("\n\n", text)
 
 
 # ── 지식 베이스 로딩 (서버 시작 시 1회) ──────────────────
 
+def _split_oversized(para: str) -> list[str]:
+    """빈 줄 없이 이어지는 거대 블록을 줄 단위로 다시 쪼갠다.
+
+    노션은 중첩 리스트를 들여쓰기 + 단일 개행으로 내보낸다. 그래서 문서
+    한 편이 통째로 '단락 하나'가 되는 일이 생긴다 — 실제로 portfolio.md에
+    16,623자짜리 단락이 있었다. 빈 줄로만 자르면 이게 청크 하나가 되는데,
+    BM25는 문서 길이로 점수를 정규화하므로 그 거대 청크가 어떤 질의에도
+    상위로 못 올라오고, 올라와도 도구는 앞부분만 잘라 돌려준다.
+    """
+    if len(para) <= CHUNK_SIZE:
+        return [para]
+    parts, buf = [], ""
+    for line in para.split("\n"):
+        if len(buf) + len(line) > CHUNK_SIZE and buf:
+            parts.append(buf.strip())
+            buf = ""
+        buf += line + "\n"
+    if buf.strip():
+        parts.append(buf.strip())
+    return parts
+
+
 def _chunk_text(text: str, source: str) -> list[dict]:
     """단락 단위로 병합하며 CHUNK_SIZE 근처로 청킹."""
     chunks, buf = [], ""
     for para in text.split("\n\n"):
-        if len(buf) + len(para) > CHUNK_SIZE and buf:
-            chunks.append({"source": source, "text": buf.strip()})
-            buf = ""
-        buf += para + "\n\n"
+        for block in _split_oversized(para):
+            if len(buf) + len(block) > CHUNK_SIZE and buf:
+                chunks.append({"source": source, "text": buf.strip()})
+                buf = ""
+            buf += block + "\n\n"
     if buf.strip():
         chunks.append({"source": source, "text": buf.strip()})
     return chunks
@@ -203,12 +233,13 @@ mcp.add_resource(TextResource(
 ))
 
 
-def _snippet(text: str, limit: int = 700) -> str:
+def _snippet(text: str, limit: int = CHUNK_SIZE) -> str:
     """긴 청크는 잘라서 반환하되, 잘렸다는 사실을 숨기지 않는다.
 
     말없이 자르면 모델이 문장이 중간에 끝난 걸 데이터 오류로 오해할 수 있다.
     표식이 있으면 문서 리소스(portfolio://docs/<source>)로 이어 읽으면
-    된다는 걸 안다.
+    된다는 걸 안다. 기본 한계를 CHUNK_SIZE에 맞춰 두는 이유는, 그보다
+    작으면 정상 크기 청크마저 매번 잘려 나가기 때문이다.
     """
     return text if len(text) <= limit else text[:limit] + " …(이하 생략)"
 
@@ -258,12 +289,55 @@ def tech_deep_dive(topic: str) -> str:
 
 # ── Completions ──────────────────────────────────────────
 #
-# 프롬프트 인자(topic, focus) 자동완성. 제안 목록을 profile.json의
-# 프로젝트명·기술 스택에서 뽑으므로 하드코딩 없이 데이터와 항상 일치한다.
+# 프롬프트 인자(topic, focus) 자동완성. 제안 목록을 profile.json과 문서
+# 제목에서 뽑으므로 하드코딩 없이 데이터와 항상 일치한다.
+#
+# 처음에는 프로젝트명·기술 스택만 썼는데, 그러면 tech_deep_dive의 docstring이
+# 예시로 드는 'TTFB 최적화'조차 제안되지 않았다 — 정작 검색으로는 잘 찾히는
+# 주제인데도. 실제 주제어는 문서 제목에 있어서 거기서도 함께 뽑는다.
 
-_COMPLETION_VOCAB = sorted(
+_HEADING = re.compile(r"^#{1,4}\s+(.+?)\s*$", re.M)
+_HEADING_NUMBER = re.compile(r"^[\d.\s]+")
+_TERM = re.compile(r"[A-Za-z][A-Za-z0-9-]{2,}")
+# 흔한 영어 단어는 주제어가 아니다 — 제안 목록만 어지럽힌다
+_TERM_STOP = {"the", "and", "for", "with", "from", "this", "that", "was", "were",
+              "have", "has", "not", "you", "your", "web", "api", "app", "use"}
+
+
+def _heading_terms() -> set[str]:
+    """문서 제목을 주제어 후보로 쓴다 — 번호 접두사는 떼고 길이를 제한한다."""
+    terms = set()
+    for text in DOCS.values():
+        for title in _HEADING.findall(text):
+            title = _HEADING_NUMBER.sub("", re.sub(r"[*`\[\]()]", "", title)).strip()
+            if 2 <= len(title) <= 40:
+                terms.add(title)
+    return terms
+
+
+def _corpus_terms(min_docs: int = 2) -> set[str]:
+    """문서 2편 이상에 나오는 영문 기술 용어. TTFB·ITN 같은 약어가 여기서 나온다."""
+    seen_in: dict[str, set[str]] = {}
+    for name, text in DOCS.items():
+        for term in set(_TERM.findall(text)):
+            if term.lower() not in _TERM_STOP:
+                seen_in.setdefault(term, set()).add(name)
+    return {t for t, docs in seen_in.items() if len(docs) >= min_docs}
+
+
+def _dedupe_ci(terms: set[str]) -> list[str]:
+    """대소문자만 다른 중복을 없앤다 — 'ITN'과 'itn'을 둘 다 제안할 이유가 없다."""
+    best: dict[str, str] = {}
+    for term in sorted(terms):          # 정렬상 대문자 표기가 먼저 와서 채택된다
+        best.setdefault(term.lower(), term)
+    return sorted(best.values())
+
+
+_COMPLETION_VOCAB = _dedupe_ci(
     {p["name"] for p in PROFILE["projects"]}
     | {s for group in PROFILE["skills"].values() for s in group}
+    | _heading_terms()
+    | _corpus_terms()
 )
 
 
@@ -271,9 +345,12 @@ _COMPLETION_VOCAB = sorted(
 async def _complete(ref, argument, context):
     if argument.name not in ("topic", "focus"):
         return None
-    prefix = argument.value.lower()
-    values = [v for v in _COMPLETION_VOCAB if prefix in v.lower()]
-    return Completion(values=values[:20], total=len(values))
+    typed = argument.value.lower()
+    matches = [v for v in _COMPLETION_VOCAB if typed in v.lower()]
+    # 'TT'를 치면 'TTS 프로젝트'가 'HTTP'보다 먼저여야 한다 — 접두사 일치를
+    # 앞에 두고, 같은 조건이면 짧은 쪽(더 일반적인 주제어)을 먼저 제안한다.
+    matches.sort(key=lambda v: (not v.lower().startswith(typed), len(v), v))
+    return Completion(values=matches[:20], total=len(matches))
 
 
 # ── 실시간 조회 (표준 라이브러리만 사용 — 의존성 2개 유지) ──
@@ -284,19 +361,32 @@ async def _complete(ref, argument, context):
 # 이 서버는 이윤선 데이터만 정확하게 내려주는 것이 역할이다.
 
 _HTTP_TIMEOUT = 6
+_HTTP_MAX_BYTES = 2_000_000  # GitHub/블로그 응답은 수 KB대 — 이상 크면 잘라서 메모리 보호
 _CACHE_TTL = 600          # GitHub 무인증 60회/시 제한 대비
-_http_cache: dict[str, tuple[float, str]] = {}
+_FAIL_TTL = 60            # 실패도 잠깐 기억한다 (아래 설명)
+_http_cache: dict[str, tuple[float, str | Exception]] = {}
 
 
 def _http_get(url: str) -> str:
-    """TTL 캐시를 얹은 GET. blocking이므로 도구에서는 to_thread로 감싼다."""
+    """TTL 캐시를 얹은 GET. blocking이므로 도구에서는 to_thread로 감싼다.
+
+    실패도 짧게 캐시한다. 안 그러면 네트워크가 막힌 환경에서 도구를 부를
+    때마다 타임아웃까지 6초씩 기다리는데, instructions가 클라이언트에게
+    이 도구들을 쓰라고 안내하므로 연속 호출이 실제로 일어난다.
+    """
     now = time.time()
     hit = _http_cache.get(url)
     if hit and hit[0] > now:
+        if isinstance(hit[1], Exception):
+            raise hit[1]
         return hit[1]
     req = urllib.request.Request(url, headers={"User-Agent": "portfolio-mcp"})
-    with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
-        body = resp.read().decode("utf-8", errors="replace")
+    try:
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+            body = resp.read(_HTTP_MAX_BYTES).decode("utf-8", errors="replace")
+    except Exception as e:
+        _http_cache[url] = (now + _FAIL_TTL, e)
+        raise
     _http_cache[url] = (now + _CACHE_TTL, body)
     return body
 
@@ -330,6 +420,60 @@ class Project(TypedDict):
 
 class ProjectsOutput(TypedDict):
     projects: list[Project]
+    hint: NotRequired[str | None]
+
+
+class Career(TypedDict):
+    company: str
+    period: str
+    role: str
+    # 공식 사이트를 확인하지 못한 회사는 이 키가 없다 — 추측해서 채우지 않는다
+    homepage: NotRequired[str | None]
+
+
+class ProfileOutput(TypedDict):
+    name: str
+    title: str
+    career: list[Career]
+    education: list[dict[str, Any]]
+    skills: dict[str, list[str]]
+    links: dict[str, str]
+
+
+class PublicationsOutput(TypedDict):
+    publications: list[dict[str, Any]]
+    patents: list[dict[str, Any]]
+    award: str
+
+
+class Repo(TypedDict):
+    name: str
+    description: str | None
+    language: str | None
+    stars: int
+    pushed_at: str
+    url: str
+
+
+class GithubOutput(TypedDict):
+    repos: list[Repo]
+    hint: NotRequired[str | None]
+
+
+class Post(TypedDict):
+    title: str
+    link: str | None
+    published: str | None
+
+
+class BlogOutput(TypedDict):
+    posts: list[Post]
+    blog: NotRequired[str | None]
+    hint: NotRequired[str | None]
+
+
+class CompanyOutput(TypedDict):
+    companies: list[Career]
     hint: NotRequired[str | None]
 
 
@@ -417,7 +561,7 @@ async def portfolio_list_projects(
         "openWorldHint": False,
     },
 )
-async def portfolio_get_publications() -> dict[str, Any]:
+async def portfolio_get_publications() -> PublicationsOutput:
     """이윤선의 논문(제1저자 7편), 특허(제1발명자 2건), 수상 내역을 반환한다."""
     return {
         "publications": PROFILE["publications"],
@@ -436,7 +580,7 @@ async def portfolio_get_publications() -> dict[str, Any]:
         "openWorldHint": False,
     },
 )
-async def portfolio_get_profile() -> dict[str, Any]:
+async def portfolio_get_profile() -> ProfileOutput:
     """이윤선의 기본 프로필(소개, 경력 회사·기간·직급, 학력, 기술 스택, 링크)을 반환한다.
 
     대화 시작 시 전체 맥락을 잡는 용도로 먼저 호출하기에 적합하다.
@@ -461,7 +605,7 @@ async def portfolio_get_profile() -> dict[str, Any]:
         "openWorldHint": True,
     },
 )
-async def portfolio_get_github_activity() -> dict[str, Any]:
+async def portfolio_get_github_activity() -> GithubOutput:
     """이윤선의 GitHub 공개 저장소를 실시간 조회한다 (최근 푸시 순 10개).
 
     profile의 정적 사실과 달리 '요즘도 활동하는가'를 오늘 자 데이터로
@@ -493,7 +637,7 @@ async def portfolio_get_github_activity() -> dict[str, Any]:
         "openWorldHint": True,
     },
 )
-async def portfolio_get_blog_posts() -> dict[str, Any]:
+async def portfolio_get_blog_posts() -> BlogOutput:
     """이윤선의 기술 블로그 최신 글을 RSS로 실시간 조회한다 (최대 5건).
 
     조회 실패 시 hint와 함께 빈 결과를 반환한다 — 그 경우 links.blog
@@ -529,7 +673,7 @@ async def portfolio_get_company_info(
     company: Annotated[str, Field(
         description="회사명으로 필터링 (예: '인피닉', '에이아이세스'). 빈 값이면 전체 반환",
         max_length=50)] = "",
-) -> dict[str, Any]:
+) -> CompanyOutput:
     """이윤선이 다닌 회사의 재직 정보(기간·직급)와 검증된 공식 홈페이지를 반환한다.
 
     회사의 최신 사업 현황·채용 정보는 이 서버의 데이터 범위 밖이다 —
