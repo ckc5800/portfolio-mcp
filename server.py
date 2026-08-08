@@ -36,6 +36,18 @@ PROFILE_PATH = BASE_DIR / "data" / "profile.json"
 CHUNK_SIZE = 800
 MIN_CHUNK_CHARS = 30   # 구분선('---')·제목 줄만 남은 조각은 인덱싱하지 않는다
 
+# 검색 결과로 인정할 최소 점수 — '질의 토큰 1개당' 기준이다.
+#
+# bigram 토크나이저를 넣은 뒤로 아무 한국어 질의나 조금씩은 매칭된다.
+# '양자컴퓨팅 큐비트 결맞음'처럼 이 포트폴리오와 무관한 질문에도 점수 5점대가
+# 나와서, "못 찾았으니 다른 키워드로" 힌트가 사실상 죽어 있었다.
+#
+# 절대 임계값은 쓸 수 없다. 실측하면 정상 단일어 질의가 더 낮게 나온다 —
+# 'MetalLB' 4.6, 'OCR' 4.4, 'Redis' 1.8인데 무의미 질의가 5.5다. BM25 점수는
+# 질의 토큰 수에 비례해 커지기 때문이다. 토큰 수로 나누면 뒤집힌다:
+# 무의미 질의 0.00~0.55 / 정상 질의 1.82~4.87. 양쪽에 여유를 두고 1.0.
+MIN_SCORE_PER_TOKEN = 1.0
+
 # instructions는 initialize 응답에 실려, 클라이언트 LLM이 프롬프트를 열지
 # 않아도 서버 사용법을 안다. 프롬프트(candidate_briefing 등)의 요약판이다.
 mcp = FastMCP(
@@ -502,13 +514,15 @@ async def portfolio_search(
     제공하지 않는 세부 내용을 찾을 때 사용한다.
     출처 파일명과 함께 관련 청크를 반환한다.
     """
-    scores = BM25.get_scores(_tokenize(query))
+    tokens = _tokenize(query)
+    scores = BM25.get_scores(tokens)
+    floor = MIN_SCORE_PER_TOKEN * max(len(tokens), 1)
     ranked = sorted(range(len(CHUNKS)), key=lambda i: scores[i], reverse=True)
     results = [
         {"source": CHUNKS[i]["source"],
          "score": round(float(scores[i]), 2),
          "text": _snippet(CHUNKS[i]["text"])}
-        for i in ranked[:top_k] if scores[i] > 0
+        for i in ranked[:top_k] if scores[i] >= floor
     ]
     if not results:
         return {

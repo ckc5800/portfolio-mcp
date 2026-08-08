@@ -119,6 +119,18 @@ async def main() -> int:
                 # 검증된 공식 홈페이지가 재직 정보와 함께 와야 한다
                 ("portfolio_get_company_info", {"company": "인피닉"},
                  lambda d: "infiniq" in d["companies"][0].get("homepage", "")),
+                # 결과가 없을 때의 hint 분기 — '다음에 뭘 하라'가 없으면
+                # agent가 헤맨다. 설계 원칙인데 테스트가 한 번도 안 밟고 있었다.
+                ("portfolio_search", {"query": "존재하지않는키워드zzz"},
+                 lambda d: not d["results"] and "portfolio_list_projects" in d["hint"]),
+                ("portfolio_list_projects", {"company": "없는회사zzz"},
+                 lambda d: not d["projects"] and bool(d["hint"])),
+                ("portfolio_get_company_info", {"company": "없는회사zzz"},
+                 lambda d: not d["companies"] and bool(d["hint"])),
+                # 두 데이터 소스가 같은 수치를 말해야 한다 — profile.json의 최신
+                # TTS 수치가 문서 검색으로도 나와야 낡은 값이 섞이지 않는다
+                ("portfolio_search", {"query": "Throughput rps 동시 스트림", "top_k": 4},
+                 lambda d: any("3.09" in r["text"] for r in d["results"])),
             ]
             for name, args, check in cases:
                 result = await session.call_tool(name, args)
