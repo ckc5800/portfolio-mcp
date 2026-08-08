@@ -19,3 +19,5 @@ jobs:
       - run: pip install -r requirements.txt
       - run: pip install "${{ matrix.mcp }}"
       - run: python test_client.py
+      # 검색 품질 회귀 가드 — 토크나이저·청커·임계값을 건드리면 여기서 걸린다
+      - run: python eval_search.py

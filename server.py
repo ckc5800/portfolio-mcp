@@ -522,7 +522,8 @@ async def portfolio_search(
         {"source": CHUNKS[i]["source"],
          "score": round(float(scores[i]), 2),
          "text": _snippet(CHUNKS[i]["text"])}
-        for i in ranked[:top_k] if scores[i] >= floor
+        # floor가 0이어도 점수 0인 청크는 결과가 아니다 — 두 조건을 함께 본다
+        for i in ranked[:top_k] if scores[i] > 0 and scores[i] >= floor
     ]
     if not results:
         return {
