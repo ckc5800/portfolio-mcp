@@ -39,11 +39,18 @@
   ],
   "projects": [
     {
-      "name": "TTS 프로젝트",
+      "name": "Qwen3-TTS 플랫폼 구축",
       "company": "MiCo AI",
-      "period": "2025.09 ~ 현재",
-      "role": "PM 및 풀스택 개발",
-      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이. TTFB 2292ms→334ms(85% 단축), 동시 스트림 수용 한계 36, Throughput 0.68→1.41→3.09rps, burst p95 TTFB 1,008ms→652ms, RTF 0.1 이하, CER 3~5%, 32개 언어 지원, ITN 정확도 50.1%→70.9% (2026-08-04 엔진 마이그레이션 반영 갱신)"
+      "period": "2026.03 ~ 현재",
+      "role": "PM · 풀스택 단독 개발 (백엔드·프론트·인프라)",
+      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이. 동시 스트림 수용 한계 36, Throughput 0.68→1.41→3.09rps, burst p95 TTFB 1,008ms→652ms, RTF 0.1 이하, CER 3~5%, 32개 언어 지원, ITN 정확도 50.1%→70.9% (2026-08-04 엔진 마이그레이션 반영 갱신)"
+    },
+    {
+      "name": "TTS 스트리밍 API 리팩토링 (ZipVoice 기반)",
+      "company": "MiCo AI",
+      "period": "2025.09 ~ 2025.10",
+      "role": "스트리밍 API 담당 (인수인계, 기여도 100%)",
+      "summary": "전체 텍스트를 다 합성한 뒤 전송하던 구조를, 엔진 gRPC 서버 스트리밍으로 문장 단위 합성 즉시 전송하도록 교체. TTFB 2,292ms→334ms(85.4% 단축, 6.85배 응답 개선)"
     },
     {
       "name": "STT 배포",

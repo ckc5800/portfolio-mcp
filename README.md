@@ -26,7 +26,7 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 | 도구 | 하는 일 |
 |---|---|
 | `portfolio_get_profile` | 경력 회사·기간·직급, 학력, 기술 스택, 링크 |
-| `portfolio_list_projects` | 프로젝트 16개 목록. 회사명 필터 지원(구 사명도 인식) |
+| `portfolio_list_projects` | 프로젝트 17개 목록. 회사명 필터 지원(구 사명도 인식) |
 | `portfolio_get_publications` | 논문 7편(제1저자), 특허 2건(제1발명자), 수상 |
 | `portfolio_search` | 기술문서 BM25 검색. 트러블슈팅 과정 같은 세부 내용용 |
 | `portfolio_get_github_activity` | GitHub 공개 저장소 실시간 조회 (최근 푸시 순 10개) |
