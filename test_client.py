@@ -1,4 +1,5 @@
-"""MCP 서버 스모크 테스트 — stdio로 서버를 띄우고 4개 도구를 실제 호출한다."""
+"""MCP 서버 스모크 테스트. stdio로 서버를 띄우고
+도구·리소스·프롬프트·자동완성을 실제로 호출한다."""
 import asyncio
 import json
 import sys
@@ -51,12 +52,12 @@ async def main() -> int:
                 print(f"[FAIL] 리소스 6개(profile 포함) 기대, {uris}")
                 failures += 1
 
-            # 읽기까지 검증 — 등록만 되고 내용이 빈 리소스면 의미가 없다
+            # 읽기까지 검증한다. 등록만 되고 내용이 빈 리소스면 의미가 없다
             for uri, check in [
                 ("portfolio://docs/tts-deepdive.md", lambda t: "팝 노이즈" in t),
                 ("portfolio://profile", lambda t: bool(json.loads(t).get("career"))),
             ]:
-                # str로 넘긴다 — mcp 1.x는 AnyUrl로 코어션하고 2.x는 str을 기대한다
+                # str로 넘긴다. mcp 1.x는 AnyUrl로 코어션하고 2.x는 str을 기대한다
                 res = await session.read_resource(uri)
                 text = res.contents[0].text if res.contents else ""
                 ok = check(text)
@@ -90,7 +91,7 @@ async def main() -> int:
 
             # 응답이 '왔는지'가 아니라 '내용이 맞는지'를 본다.
             # 이전 버전은 bool(text)만 봐서, 도구가 "결과 없음 + hint"를
-            # 돌려줘도 통과했다 — 실제로 회사명 필터가 깨져 있었는데
+            # 돌려줘도 통과했다. 실제로 회사명 필터가 깨져 있었는데
             # 테스트는 계속 초록색이었다. 실패할 수 있어야 테스트다.
             def has_projects(d):
                 return len(d.get("projects", [])) > 0
@@ -107,10 +108,10 @@ async def main() -> int:
                 ("portfolio_get_publications", {},
                  lambda d: len(d.get("patents", [])) == 2 and bool(d.get("award"))),
                 ("portfolio_search", {"query": "TTFB 최적화", "top_k": 2}, has_results),
-                # 조사가 붙은 질의 — bigram 토크나이저 이전에는 0건이었다
+                # 조사가 붙은 질의. bigram 토크나이저 이전에는 0건이었다
                 ("portfolio_search", {"query": "쿠버네티스로 뭐 했어", "top_k": 3},
                  has_results),
-                # 실시간 도구는 오프라인 CI에서도 깨지지 않아야 한다 —
+                # 실시간 도구는 오프라인 CI에서도 깨지지 않아야 한다.
                 # 데이터가 오거나, 폴백을 안내하는 hint가 오거나 (graceful)
                 ("portfolio_get_github_activity", {},
                  lambda d: bool(d.get("repos")) or bool(d.get("hint"))),
@@ -119,7 +120,7 @@ async def main() -> int:
                 # 검증된 공식 홈페이지가 재직 정보와 함께 와야 한다
                 ("portfolio_get_company_info", {"company": "인피닉"},
                  lambda d: "infiniq" in d["companies"][0].get("homepage", "")),
-                # 결과가 없을 때의 hint 분기 — '다음에 뭘 하라'가 없으면
+                # 결과가 없을 때의 hint 분기. '다음에 뭘 하라'가 없으면
                 # agent가 헤맨다. 설계 원칙인데 테스트가 한 번도 안 밟고 있었다.
                 ("portfolio_search", {"query": "존재하지않는키워드zzz"},
                  lambda d: not d["results"] and "portfolio_list_projects" in d["hint"]),
@@ -127,7 +128,7 @@ async def main() -> int:
                  lambda d: not d["projects"] and bool(d["hint"])),
                 ("portfolio_get_company_info", {"company": "없는회사zzz"},
                  lambda d: not d["companies"] and bool(d["hint"])),
-                # 두 데이터 소스가 같은 수치를 말해야 한다 — profile.json의 최신
+                # 두 데이터 소스가 같은 수치를 말해야 한다. profile.json의 최신
                 # TTS 수치가 문서 검색으로도 나와야 낡은 값이 섞이지 않는다
                 ("portfolio_search", {"query": "Throughput rps 동시 스트림", "top_k": 4},
                  lambda d: any("3.09" in r["text"] for r in d["results"])),

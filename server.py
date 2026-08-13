@@ -1,9 +1,9 @@
-"""portfolio_mcp — AI 엔지니어 이윤선의 포트폴리오를 노출하는 MCP 서버.
+"""portfolio_mcp: AI 엔지니어 이윤선의 포트폴리오를 노출하는 MCP 서버.
 
 MCP 클라이언트(Claude Desktop, Claude Code 등)가 포트폴리오 문서 검색과
 구조화된 경력 정보 조회를 도구로 사용할 수 있게 한다.
 
-- 검색: BM25 키워드 검색 (외부 서비스/임베딩 서버 불필요 — 설치 즉시 동작)
+- 검색: BM25 키워드 검색 (외부 서비스나 임베딩 서버 없이 설치 즉시 동작)
 - 구조화 정보: data/profile.json (검증된 사실만 수록)
 - Transport: stdio (로컬 서버)
 """
@@ -36,13 +36,13 @@ PROFILE_PATH = BASE_DIR / "data" / "profile.json"
 CHUNK_SIZE = 800
 MIN_CHUNK_CHARS = 30   # 구분선('---')·제목 줄만 남은 조각은 인덱싱하지 않는다
 
-# 검색 결과로 인정할 최소 점수 — '질의 토큰 1개당' 기준이다.
+# 검색 결과로 인정할 최소 점수. '질의 토큰 1개당' 기준이다.
 #
 # bigram 토크나이저를 넣은 뒤로 아무 한국어 질의나 조금씩은 매칭된다.
 # '양자컴퓨팅 큐비트 결맞음'처럼 이 포트폴리오와 무관한 질문에도 점수 5점대가
 # 나와서, "못 찾았으니 다른 키워드로" 힌트가 사실상 죽어 있었다.
 #
-# 절대 임계값은 쓸 수 없다. 실측하면 정상 단일어 질의가 더 낮게 나온다 —
+# 절대 임계값은 쓸 수 없다. 실측하면 정상 단일어 질의가 더 낮게 나온다.
 # 'MetalLB' 4.6, 'OCR' 4.4, 'Redis' 1.8인데 무의미 질의가 5.5다. BM25 점수는
 # 질의 토큰 수에 비례해 커지기 때문이다. 토큰 수로 나누면 뒤집힌다:
 # 무의미 질의 0.00~0.55 / 정상 질의 1.82~4.87. 양쪽에 여유를 두고 1.0.
@@ -83,7 +83,7 @@ _LEFTOVER_TARGET = re.compile(
     r"\]\((?!https?://)(?:[^()]|\([^()]*\))*%[0-9A-Fa-f]{2}(?:[^()]|\([^()]*\))*\)")
 _HTML_TAG = re.compile(r"</?(?:br|div|span|aside|img|p)\b[^>]*/?>", re.I)
 # 아키텍처 다이어그램의 박스 그리기 문자. 노션 인코딩 노이즈와 같은 계열의
-# 문제인데 방향이 반대다 — 이 문자들은 토큰화되지 않으므로 청크의 글자 수만
+# 문제인데 방향이 반대다. 이 문자들은 토큰화되지 않으므로 청크의 글자 수만
 # 부풀린다. 그러면 BM25가 보는 토큰 수는 그대로라 다이어그램 청크가 '아주
 # 짧은 문서'로 취급돼 길이 정규화에서 부당하게 유리해진다(실측: 732자에
 # 토큰 42개, 같은 길이 산문은 토큰 171개). 레이아웃만 지우고 내용은 남긴다.
@@ -96,9 +96,9 @@ def _strip_notion_link(m: re.Match) -> str:
     full = m.group(0)
     target = full[full.rindex("](") + 2:-1]
     if target.startswith(("http://", "https://")):
-        return full          # 실제 URL — "깃허브 주소" 같은 질문에 답해야 한다
+        return full          # 실제 URL. "깃허브 주소" 같은 질문에 답해야 한다
     if "%" in target:
-        return m.group(1)    # 인코딩된 내부 경로 — 텍스트만 남긴다
+        return m.group(1)    # 인코딩된 내부 경로. 텍스트만 남긴다
     return full
 
 
@@ -118,7 +118,7 @@ def _split_oversized(para: str) -> list[str]:
     """빈 줄 없이 이어지는 거대 블록을 줄 단위로 다시 쪼갠다.
 
     노션은 중첩 리스트를 들여쓰기 + 단일 개행으로 내보낸다. 그래서 문서
-    한 편이 통째로 '단락 하나'가 되는 일이 생긴다 — 실제로 portfolio.md에
+    한 편이 통째로 '단락 하나'가 되는 일이 생긴다. 실제로 portfolio.md에
     16,623자짜리 단락이 있었다. 빈 줄로만 자르면 이게 청크 하나가 되는데,
     BM25는 문서 길이로 점수를 정규화하므로 그 거대 청크가 어떤 질의에도
     상위로 못 올라오고, 올라와도 도구는 앞부분만 잘라 돌려준다.
@@ -162,11 +162,11 @@ def _tokenize(text: str) -> list[str]:
     """런(run) 단위 토큰 + 한글 문자 bigram. BM25용 토크나이저.
 
     단어 단위 토큰만 쓰면 '쿠버네티스로'와 '쿠버네티스'가 다른 토큰이라
-    조사가 붙은 한국어 질의에서 검색이 0건이 된다 — 실제로
+    조사가 붙은 한국어 질의에서 검색이 0건이 된다. 실제로
     '쿠버네티스로 뭐 했어', '최적화를'이 아무것도 못 찾았다. 한글 런에
     문자 bigram을 함께 넣으면 두 표기가 bigram으로 겹쳐 해결된다.
     portfolio-rag-agent의 bm25_tokenize와 같은 규칙이다(복제 이유는
-    상단 정제 규칙 주석과 같다 — 의존성 2개 단독 실행이 목표).
+    상단 정제 규칙 주석과 같다. 의존성 2개로 단독 실행하는 게 목표다).
     """
     tokens: list[str] = []
     for run in _RUNS.findall(text.lower()):
@@ -188,8 +188,8 @@ def _load_kb():
         chunks.extend(_chunk_text(text, path.name))
     chunks = [c for c in chunks if len(c["text"]) >= MIN_CHUNK_CHARS]
     if not chunks:
-        # 이대로 두면 BM25Okapi가 ZeroDivisionError를 던진다 — 원인을 말해준다
-        raise RuntimeError(f"지식 베이스가 비어 있습니다 — {DOCS_DIR}에 .md 문서가 필요합니다")
+        # 이대로 두면 BM25Okapi가 ZeroDivisionError를 던진다. 원인을 말해준다
+        raise RuntimeError(f"지식 베이스가 비어 있습니다. {DOCS_DIR}에 .md 문서가 필요합니다")
     bm25 = BM25Okapi([_tokenize(c["text"]) for c in chunks])
     return docs, chunks, bm25
 
@@ -199,11 +199,11 @@ PROFILE = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
 
 
 def _company_matches(query: str, project_company: str) -> bool:
-    """회사명 필터 — 구 사명으로 물어도 찾히게 한다.
+    """회사명 필터. 구 사명으로 물어도 찾히게 한다.
 
     career에는 정식 명칭이 'MiCo AI (구 에이아이세스)'처럼 들어 있는데
     projects에는 'MiCo AI'로만 적혀 있다. 그래서 사용자가 '에이아이세스'로
-    물으면 아무것도 안 나왔다 — 현 직장인데도. career를 별칭 사전처럼 써서
+    물으면 아무것도 안 나왔다. 현 직장인데도. career를 별칭 사전처럼 써서
     두 표기를 잇는다.
     """
     if query in project_company:
@@ -220,10 +220,10 @@ def _company_matches(query: str, project_company: str) -> bool:
 # 노출해 두 경로의 내용이 항상 일치하게 한다.
 
 def _doc_description(text: str) -> str:
-    """첫 제목 줄을 설명으로 쓴다 — 파일명보다 무슨 문서인지 잘 말해준다."""
+    """첫 제목 줄을 설명으로 쓴다. 파일명보다 무슨 문서인지 잘 말해준다."""
     for line in text.splitlines():
         if line.startswith("#"):
-            return line.lstrip("# ").strip() + " — 문서 전문"
+            return line.lstrip("# ").strip() + " (문서 전문)"
     return "포트폴리오 문서 전문"
 
 
@@ -239,7 +239,7 @@ for _name, _text in DOCS.items():
 mcp.add_resource(TextResource(
     uri="portfolio://profile",
     name="profile.json",
-    description="검증된 경력 사실 전체 — 경력·프로젝트·논문·특허·학력·기술 스택",
+    description="검증된 경력 사실 전체. 경력·프로젝트·논문·특허·학력·기술 스택",
     mime_type="application/json",
     text=json.dumps(PROFILE, ensure_ascii=False, indent=2),
 ))
@@ -273,10 +273,10 @@ def candidate_briefing(focus: str = "") -> str:
         "이윤선(AI 엔지니어) 후보의 포트폴리오를 조사해 채용 담당자용 "
         "브리핑을 작성해 주세요.\n" + focus_line +
         "\n진행 순서:\n"
-        "1. portfolio_get_profile — 경력·학력·기술 스택 전체 맥락\n"
-        "2. portfolio_list_projects — 프로젝트 목록에서 대표 성과 선별\n"
-        "3. portfolio_search — 선별한 성과의 기술적 세부(의사결정, 트러블슈팅) 확인\n"
-        "4. portfolio_get_publications — 논문·특허·수상\n"
+        "1. portfolio_get_profile: 경력·학력·기술 스택 전체 맥락\n"
+        "2. portfolio_list_projects: 프로젝트 목록에서 대표 성과 선별\n"
+        "3. portfolio_search: 선별한 성과의 기술적 세부(의사결정, 트러블슈팅) 확인\n"
+        "4. portfolio_get_publications: 논문·특허·수상\n"
         "\n작성 규칙: 도구가 반환한 검증된 사실과 수치만 인용하고, 수치에는 "
         "출처 프로젝트를 함께 적어 주세요. 추측은 추측이라고 표시해 주세요."
     )
@@ -305,19 +305,19 @@ def tech_deep_dive(topic: str) -> str:
 # 제목에서 뽑으므로 하드코딩 없이 데이터와 항상 일치한다.
 #
 # 처음에는 프로젝트명·기술 스택만 썼는데, 그러면 tech_deep_dive의 docstring이
-# 예시로 드는 'TTFB 최적화'조차 제안되지 않았다 — 정작 검색으로는 잘 찾히는
+# 예시로 드는 'TTFB 최적화'조차 제안되지 않았다. 정작 검색으로는 잘 찾히는
 # 주제인데도. 실제 주제어는 문서 제목에 있어서 거기서도 함께 뽑는다.
 
 _HEADING = re.compile(r"^#{1,4}\s+(.+?)\s*$", re.M)
 _HEADING_NUMBER = re.compile(r"^[\d.\s]+")
 _TERM = re.compile(r"[A-Za-z][A-Za-z0-9-]{2,}")
-# 흔한 영어 단어는 주제어가 아니다 — 제안 목록만 어지럽힌다
+# 흔한 영어 단어는 주제어가 아니다. 제안 목록만 어지럽힌다
 _TERM_STOP = {"the", "and", "for", "with", "from", "this", "that", "was", "were",
               "have", "has", "not", "you", "your", "web", "api", "app", "use"}
 
 
 def _heading_terms() -> set[str]:
-    """문서 제목을 주제어 후보로 쓴다 — 번호 접두사는 떼고 길이를 제한한다."""
+    """문서 제목을 주제어 후보로 쓴다. 번호 접두사는 떼고 길이를 제한한다."""
     terms = set()
     for text in DOCS.values():
         for title in _HEADING.findall(text):
@@ -338,7 +338,7 @@ def _corpus_terms(min_docs: int = 2) -> set[str]:
 
 
 def _dedupe_ci(terms: set[str]) -> list[str]:
-    """대소문자만 다른 중복을 없앤다 — 'ITN'과 'itn'을 둘 다 제안할 이유가 없다."""
+    """대소문자만 다른 중복을 없앤다. 'ITN'과 'itn'을 둘 다 제안할 이유가 없다."""
     best: dict[str, str] = {}
     for term in sorted(terms):          # 정렬상 대문자 표기가 먼저 와서 채택된다
         best.setdefault(term.lower(), term)
@@ -359,21 +359,21 @@ async def _complete(ref, argument, context):
         return None
     typed = argument.value.lower()
     matches = [v for v in _COMPLETION_VOCAB if typed in v.lower()]
-    # 'TT'를 치면 'TTS 프로젝트'가 'HTTP'보다 먼저여야 한다 — 접두사 일치를
+    # 'TT'를 치면 'TTS 프로젝트'가 'HTTP'보다 먼저여야 한다. 접두사 일치를
     # 앞에 두고, 같은 조건이면 짧은 쪽(더 일반적인 주제어)을 먼저 제안한다.
     matches.sort(key=lambda v: (not v.lower().startswith(typed), len(v), v))
     return Completion(values=matches[:20], total=len(matches))
 
 
-# ── 실시간 조회 (표준 라이브러리만 사용 — 의존성 2개 유지) ──
+# ── 실시간 조회 (표준 라이브러리만 사용, 의존성 2개 유지) ──
 #
 # 정적 사실은 profile.json이지만, "요즘도 활동하나?"는 웹에서만 답할 수
 # 있다. GitHub·블로그는 이윤선 본인의 공개 데이터라 이 서버의 범위
-# 안이다. 일반 웹 검색은 넣지 않는다 — 클라이언트가 이미 갖고 있고,
+# 안이다. 일반 웹 검색은 넣지 않는다. 클라이언트가 이미 갖고 있고,
 # 이 서버는 이윤선 데이터만 정확하게 내려주는 것이 역할이다.
 
 _HTTP_TIMEOUT = 6
-_HTTP_MAX_BYTES = 2_000_000  # GitHub/블로그 응답은 수 KB대 — 이상 크면 잘라서 메모리 보호
+_HTTP_MAX_BYTES = 2_000_000  # GitHub/블로그 응답은 수 KB대. 그보다 크면 잘라서 메모리 보호
 _CACHE_TTL = 600          # GitHub 무인증 60회/시 제한 대비
 _FAIL_TTL = 60            # 실패도 잠깐 기억한다 (아래 설명)
 _http_cache: dict[str, tuple[float, str | Exception]] = {}
@@ -407,7 +407,7 @@ def _http_get(url: str) -> str:
 #
 # dict를 TypedDict 타입으로 반환하면 FastMCP가 텍스트 JSON과 함께
 # structuredContent를 내려주고, 반환 타입에서 outputSchema를 만들어
-# 클라이언트에 공개한다. 필드는 profile.json의 실제 키와 맞춰야 한다 —
+# 클라이언트에 공개한다. 필드는 profile.json의 실제 키와 맞춰야 한다.
 # 필수 필드가 빠지면 출력 검증에서 걸려 스모크 테스트가 빨간불이 된다.
 
 class SearchHit(TypedDict):
@@ -439,7 +439,7 @@ class Career(TypedDict):
     company: str
     period: str
     role: str
-    # 공식 사이트를 확인하지 못한 회사는 이 키가 없다 — 추측해서 채우지 않는다
+    # 공식 사이트를 확인하지 못한 회사는 이 키가 없다. 추측해서 채우지 않는다
     homepage: NotRequired[str | None]
 
 
@@ -522,7 +522,7 @@ async def portfolio_search(
         {"source": CHUNKS[i]["source"],
          "score": round(float(scores[i]), 2),
          "text": _snippet(CHUNKS[i]["text"])}
-        # floor가 0이어도 점수 0인 청크는 결과가 아니다 — 두 조건을 함께 본다
+        # floor가 0이어도 점수 0인 청크는 결과가 아니다. 두 조건을 함께 본다
         for i in ranked[:top_k] if scores[i] > 0 and scores[i] >= floor
     ]
     if not results:
@@ -624,7 +624,7 @@ async def portfolio_get_github_activity() -> GithubOutput:
     """이윤선의 GitHub 공개 저장소를 실시간 조회한다 (최근 푸시 순 10개).
 
     profile의 정적 사실과 달리 '요즘도 활동하는가'를 오늘 자 데이터로
-    보여준다. 조회 실패 시 hint와 함께 빈 결과를 반환한다 — 그 경우
+    보여준다. 조회 실패 시 hint와 함께 빈 결과를 반환한다. 그 경우
     portfolio_list_projects의 정적 데이터로 답하라.
     """
     user = PROFILE["links"]["github"].rstrip("/").rsplit("/", 1)[-1]
@@ -655,14 +655,14 @@ async def portfolio_get_github_activity() -> GithubOutput:
 async def portfolio_get_blog_posts() -> BlogOutput:
     """이윤선의 기술 블로그 최신 글을 RSS로 실시간 조회한다 (최대 5건).
 
-    조회 실패 시 hint와 함께 빈 결과를 반환한다 — 그 경우 links.blog
+    조회 실패 시 hint와 함께 빈 결과를 반환한다. 그 경우 links.blog
     주소를 안내하라.
     """
     url = PROFILE["links"]["blog"].rstrip("/") + "/rss"
     try:
         root = ElementTree.fromstring(await asyncio.to_thread(_http_get, url))
         posts = [
-            # 티스토리 RSS는 제목을 이중 인코딩한다(&quot; 등) — 한 번 되돌린다
+            # 티스토리 RSS는 제목을 이중 인코딩한다(&quot; 등). 한 번 되돌린다
             {"title": html.unescape(i.findtext("title") or ""),
              "link": i.findtext("link"),
              "published": i.findtext("pubDate")}
@@ -691,7 +691,7 @@ async def portfolio_get_company_info(
 ) -> CompanyOutput:
     """이윤선이 다닌 회사의 재직 정보(기간·직급)와 검증된 공식 홈페이지를 반환한다.
 
-    회사의 최신 사업 현황·채용 정보는 이 서버의 데이터 범위 밖이다 —
+    회사의 최신 사업 현황·채용 정보는 이 서버의 데이터 범위 밖이다.
     반환된 homepage URL을 웹에서 직접 열람하거나 검색하라. homepage가
     없는 회사는 공식 사이트를 확인하지 못한 곳이다(추측해서 채우지 않았다).
     """
