@@ -47,6 +47,28 @@ JUNK = [
     "축구 월드컵 우승",
 ]
 
+# 알려진 한계. 통과를 기대하지 않으므로 채점에 넣지 않고 현황만 출력한다.
+# MIN_SCORE_PER_TOKEN을 손대려는 사람이 여기부터 보게 하려고 남긴다.
+#
+# 코퍼스 전체에 퍼진 흔한 용어를 단독으로 물으면 IDF가 낮아 점수가 안 나온다.
+# 그래서 정상 질의가 무의미 질의보다 아래에 깔린다 (실측, 최고점/토큰수):
+#
+#     'vLLM 써봤어요?'          1.1 / 5토큰  = 0.23   ← 정상
+#     '양자컴퓨팅 큐비트 결맞음'    5.1 / 11토큰 = 0.47   ← 무의미
+#     '블록체인 스마트컨트랙트 가스비' 5.3 / 14토큰 = 0.38   ← 무의미
+#     '추론 최적화 어떻게 했어요'    10.6 / 11토큰 = 0.97   ← 정상
+#
+# 점수로도 점수/토큰으로도 두 집합이 겹친다 — 임계값을 어디에 두든 한쪽이
+# 깨진다. 실제로 문턱을 '코퍼스에 있는 토큰 수'로만 계산해 봤더니 자연어
+# 질의는 살아났지만 무의미 거부가 6/6 → 3/6으로 무너졌다.
+# 임계값 문제가 아니라 코퍼스 규모 문제다(청크 56개, 한 사람 한 주제라
+# vllm·kubernetes 같은 핵심 용어가 대부분의 청크에 등장한다).
+# 완화책은 이미 있다 — 0건이면 hint가 재검색을 안내한다.
+KNOWN_MISSES = [
+    ("vLLM 써봤어요?", "흔한 용어 단독 — IDF가 낮아 문턱 미달"),
+    ("연봉 얼마 받았어요", "코퍼스에 없는 정보 — 0건이 정답"),
+]
+
 # 회귀 기준선. 현재 실측보다 살짝 낮게 둬서 잡음은 통과시키고 붕괴는 잡는다.
 # 'TTFB 최적화' 1건은 알려진 트레이드오프로 top1을 놓친다(README 개선 4 참조).
 MIN_TOP1 = 10
@@ -77,6 +99,12 @@ async def main() -> int:
         else:
             rejected += 1
 
+    known = []
+    for query, why in KNOWN_MISSES:
+        found = await server.portfolio_search(query, 4)
+        n = len(found["results"])
+        known.append(f"{query!r} {n}건 — {why}")
+
     sizes = sorted(len(c["text"]) for c in server.CHUNKS)
     print(f"청크 {len(sizes)}개 · 최대 {sizes[-1]}자 · 중앙값 {sizes[len(sizes) // 2]}자")
     print(f"정답 포함률   top1 {top1}/{len(CASES)} · top4 {top4}/{len(CASES)}")
@@ -85,6 +113,9 @@ async def main() -> int:
         print(f"  - top1 미스: {m}")
     for m in leaked:
         print(f"  - 무의미 통과: {m}")
+    print("알려진 한계 (채점 제외):")
+    for m in known:
+        print(f"  - {m}")
 
     failed = (top1 < MIN_TOP1 or top4 < MIN_TOP4 or rejected < MIN_JUNK_REJECTED)
     print("FAIL: 검색 품질 기준선 미달" if failed else "OK")
