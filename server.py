@@ -222,6 +222,26 @@ def _load_kb():
 
 
 DOCS, CHUNKS, BM25 = _load_kb()
+
+# 코퍼스에 실재하는 '온전한' 토큰 집합. bigram으로 만들어 낸 조각은 넣지 않는다.
+_VOCAB = {run for c in CHUNKS
+          for run in _RUNS.findall((c["section"] + " " + c["text"]).lower())}
+
+
+def _has_corpus_term(query: str) -> bool:
+    """질의가 코퍼스에 실재하는 단어를 하나라도 담고 있는가.
+
+    MIN_SCORE_PER_TOKEN은 점수 축에서 무의미 질의를 걸러 주지만, 자연스러운
+    한국어 질문까지 같이 막았다. 어미가 bigram으로 토큰 수를 부풀리는데
+    그 조각들은 코퍼스에 없어 점수는 0을 보태면서 문턱만 올리기 때문이다.
+    'vLLM 써봤어요?'가 0건이었다. vLLM은 문서에 가득한데도.
+
+    점수 축으로는 두 집합이 겹쳐서 임계값을 어디에 둬도 한쪽이 깨진다.
+    갈리는 축은 따로 있다. 무의미 질의는 온전한 단어가 코퍼스에 하나도
+    없고(0/2~0/4), 정상 질의는 자연어라도 반드시 하나는 있다.
+    그래서 이 관문을 통과하면 점수 문턱을 걷는다.
+    """
+    return any(run in _VOCAB for run in _RUNS.findall(query.lower()))
 PROFILE = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
 
 
@@ -548,7 +568,9 @@ async def portfolio_search(
     """
     tokens = _tokenize(query)
     scores = BM25.get_scores(tokens)
-    floor = MIN_SCORE_PER_TOKEN * max(len(tokens), 1)
+    # 코퍼스에 실재하는 단어가 질의에 있으면 문턱을 걷는다. 없으면 bigram이
+    # 우연히 스친 것뿐이라 문턱으로 막는다.
+    floor = 0.0 if _has_corpus_term(query) else MIN_SCORE_PER_TOKEN * max(len(tokens), 1)
     ranked = sorted(range(len(CHUNKS)), key=lambda i: scores[i], reverse=True)
     results = [
         {"source": CHUNKS[i]["source"],
