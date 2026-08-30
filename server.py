@@ -56,8 +56,8 @@ mcp = FastMCP(
         "AI 엔지니어 이윤선의 포트폴리오 서버(read-only). "
         "portfolio_get_profile로 전체 맥락을 잡고, portfolio_list_projects로 "
         "프로젝트를 고른 뒤, 기술 세부사항은 portfolio_search로 검색하라. "
-        "검색 결과가 '…(이하 생략)'으로 잘려 있으면 portfolio://docs/<source> "
-        "리소스에서 문서 전문을 이어 읽어라. "
+        "검색 결과에는 조각이 나온 절 제목(section)과 문서 전문 주소(resource)가 "
+        "함께 온다. 조각만으로 맥락이 부족하면 resource를 열어 이어 읽어라. "
         "최근 활동은 portfolio_get_github_activity(GitHub)·"
         "portfolio_get_blog_posts(블로그)로 실시간 조회하고, 재직 회사의 "
         "공식 홈페이지는 portfolio_get_company_info로 확인하라. "
@@ -136,8 +136,31 @@ def _split_oversized(para: str) -> list[str]:
     return parts
 
 
+_HEADING_LINE = re.compile(r"^#{1,6}\s+(.+?)\s*$")
+
+
+def _assign_sections(chunks: list[dict]) -> None:
+    """각 청크에 소속 절 제목을 달아 준다.
+
+    청킹하고 나면 청크의 68%에 제목 줄이 없다. 그러면 도구는 파일명만 붙은
+    조각을 돌려주고, 클라이언트는 그게 어느 프로젝트 이야기인지 모른 채
+    읽는다. 실제로 profile.json에서 서로 다른 TTS 프로젝트 둘이 한 항목으로
+    섞여 있던 적이 있어서, 출처를 흐리는 건 위험하다.
+
+    청크 안에 제목이 있으면 그 첫 제목이 소속이고, 없으면 앞 청크에서
+    이어지는 제목을 물려받는다.
+    """
+    current = ""
+    for c in chunks:
+        heads = [m.group(1) for m in
+                 (_HEADING_LINE.match(line) for line in c["text"].split("\n")) if m]
+        c["section"] = (heads[0] if heads else current)[:60]
+        if heads:
+            current = heads[-1]
+
+
 def _chunk_text(text: str, source: str) -> list[dict]:
-    """단락 단위로 병합하며 CHUNK_SIZE 근처로 청킹."""
+    """단락 단위로 병합하며 CHUNK_SIZE 근처로 청킹. 절 제목도 함께 붙인다."""
     chunks, buf = [], ""
     for para in text.split("\n\n"):
         for block in _split_oversized(para):
@@ -147,6 +170,7 @@ def _chunk_text(text: str, source: str) -> list[dict]:
             buf += block + "\n\n"
     if buf.strip():
         chunks.append({"source": source, "text": buf.strip()})
+    _assign_sections(chunks)
     return chunks
 
 
@@ -190,7 +214,10 @@ def _load_kb():
     if not chunks:
         # 이대로 두면 BM25Okapi가 ZeroDivisionError를 던진다. 원인을 말해준다
         raise RuntimeError(f"지식 베이스가 비어 있습니다. {DOCS_DIR}에 .md 문서가 필요합니다")
-    bm25 = BM25Okapi([_tokenize(c["text"]) for c in chunks])
+    # 절 제목을 본문과 함께 색인한다. 제목의 단어가 그 절 전체에 걸리므로
+    # 본문이 제목을 다시 말하지 않는 조각도 찾힌다. 실측으로 top1 정답이
+    # 11/12에서 12/12가 됐고, 무의미 질의 거부는 6/6 그대로다.
+    bm25 = BM25Okapi([_tokenize(c["section"] + "\n" + c["text"]) for c in chunks])
     return docs, chunks, bm25
 
 
@@ -292,8 +319,8 @@ def tech_deep_dive(topic: str) -> str:
         f"이윤선의 포트폴리오에서 '{topic}' 관련 경험을 깊게 조사해 주세요.\n\n"
         f"1. portfolio_search로 '{topic}'을(를) 검색하고, 결과가 부족하면 "
         "연관 키워드로 2~3회 재검색해 주세요.\n"
-        "2. 검색 결과가 '…(이하 생략)'으로 잘려 있으면 해당 문서 리소스 "
-        "portfolio://docs/<source>를 열어 전문을 읽어 주세요.\n"
+        "2. 조각만으로 맥락이 부족하면 결과에 들어 있는 resource 주소를 열어 "
+        "문서 전문을 읽어 주세요. section 값으로 어느 절 이야기인지 확인할 수 있습니다.\n"
         "3. 문제 상황 → 접근 → 결과(수치) 구조로 정리해 주세요.\n\n"
         "문서에 없는 내용은 지어내지 말고 없다고 말해 주세요."
     )
@@ -412,6 +439,11 @@ def _http_get(url: str) -> str:
 
 class SearchHit(TypedDict):
     source: str
+    # 조각이 어느 절에서 나왔는지. 파일명만으로는 어느 프로젝트 이야기인지
+    # 알 수 없어서, 클라이언트가 서로 다른 프로젝트를 섞을 위험이 있다
+    section: str
+    # 문서 전문을 이어 읽을 리소스 주소. 클라이언트가 조립하지 않아도 되게 한다
+    resource: str
     score: float
     text: str
 
@@ -520,6 +552,8 @@ async def portfolio_search(
     ranked = sorted(range(len(CHUNKS)), key=lambda i: scores[i], reverse=True)
     results = [
         {"source": CHUNKS[i]["source"],
+         "section": CHUNKS[i]["section"],
+         "resource": f"portfolio://docs/{CHUNKS[i]['source']}",
          "score": round(float(scores[i]), 2),
          "text": _snippet(CHUNKS[i]["text"])}
         # floor가 0이어도 점수 0인 청크는 결과가 아니다. 두 조건을 함께 본다

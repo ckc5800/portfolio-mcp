@@ -70,8 +70,8 @@ KNOWN_MISSES = [
 ]
 
 # 회귀 기준선. 현재 실측보다 살짝 낮게 둬서 잡음은 통과시키고 붕괴는 잡는다.
-# 'TTFB 최적화' 1건은 알려진 트레이드오프로 top1을 놓친다(README 개선 4 참조).
-MIN_TOP1 = 10
+# 현재 top1 12/12. 한 건 정도의 흔들림은 통과시키고 붕괴만 잡는다.
+MIN_TOP1 = 11
 MIN_TOP4 = 12
 MIN_JUNK_REJECTED = 6
 
