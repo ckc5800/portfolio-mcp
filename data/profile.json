@@ -1,6 +1,6 @@
 {
   "name": "이윤선 (Lee Yoon Seon)",
-  "title": "6년차 AI 엔지니어: AI·MLOps, 프로덕션 ML 시스템 구축 및 운영",
+  "title": "6년차 AI Inference/Serving Engineer: 추론 서빙 최적화, 프로덕션 ML 시스템 구축·운영",
   "links": {
     "portfolio": "https://ckc5800.github.io",
     "github": "https://github.com/ckc5800",
@@ -10,7 +10,7 @@
     {
       "company": "MiCo AI (구 에이아이세스)",
       "period": "2025.04 ~ 현재",
-      "role": "Manager",
+      "role": "AI Engineer · Serving",
       "homepage": "https://micoai.ai"
     },
     {
@@ -28,7 +28,7 @@
     {
       "company": "큐헷지 (QUHEDGE)",
       "period": "2020.09 ~ 2021.09",
-      "role": "Intern"
+      "role": "Contract"
     },
     {
       "company": "KISTI",
@@ -43,42 +43,42 @@
       "company": "MiCo AI",
       "period": "2026.03 ~ 현재",
       "role": "PM · 풀스택 단독 개발 (백엔드·프론트·인프라)",
-      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이. 동시 스트림 수용 한계 36, Throughput 0.68→1.41→3.09rps, burst p95 TTFB 1,008ms→652ms, RTF 0.1 이하, CER 3~5%, 32개 언어 지원, ITN 정확도 50.1%→70.9% (2026-08-04 엔진 마이그레이션 반영 갱신)"
+      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이를 모델 선정(1.7B→0.6B)부터 아키텍처·배포·운영까지 단독 구축, 고객사 PoC·시연 진행. 엔진 처리량 0.73 → 3.09 rps(4.2배 — 몸통은 vLLM 0.24 네이티브 Code2Wav CUDA-graph 배칭, 자체 FP8·executor 튜닝이 그 앞 구간). burst p95 TTFB 1,008 → 652ms, 동시 스트림 수용 한계 36(RTF 마진 기준), Stream 부하 테스트 동시 256건 무오류. 32개 언어(vLLM 10 + Supertonic 22), ITN 정규화 정확도 50.1% → 70.9%. 오픈소스 기여 vllm-project/vllm-omni — abort 요청의 sender 상태 미회수로 호스트 메모리 누수 규명, 최소 패치 A/B로 257 → 60 MiB/h(77% 감소) 검증"
     },
     {
       "name": "TTS 스트리밍 API 리팩토링 (ZipVoice 기반)",
       "company": "MiCo AI",
       "period": "2025.09 ~ 2025.10",
       "role": "스트리밍 API 담당 (인수인계, 기여도 100%)",
-      "summary": "전체 텍스트를 다 합성한 뒤 전송하던 구조를, 엔진 gRPC 서버 스트리밍으로 문장 단위 합성 즉시 전송하도록 교체. TTFB 2,292ms→334ms(85.4% 단축, 6.85배 응답 개선)"
+      "summary": "사내에서 쓰던 기존 TTS(ZipVoice) 스트리밍 API를 인계받아 리팩토링. 전체 텍스트를 다 합성한 뒤 전송하던 구조를, 엔진 gRPC server streaming으로 문장 단위 합성 즉시 전송하도록 교체(/sse-realtime 신설). TTFB 1,943ms → 985ms(49% 단축, 같은 텍스트를 양쪽 엔드포인트로 완주시킨 비교)"
     },
     {
       "name": "STT 배포",
       "company": "MiCo AI",
       "period": "2025.07 ~ 2025.09",
-      "role": "배포/서빙 담당 (팀 협업)",
-      "summary": "WhisperX 기반 STT 엔진 성능 개선, Triton Inference Server 기반 추론 환경 최적화. AIG 요구사항 해결 4건"
+      "role": "배포·서빙 담당 (팀 협업)",
+      "summary": "AIG 상담센터 대상 Faster Whisper 기반 STT의 배포·운영 담당. 팀이 구성한 Triton 파일·스트리밍 두 추론 모델 위의 전처리·후처리·서비스 계층을 모듈화해 두 경로의 공통 로직을 통합하고, 로그·Docker 구조와 컨테이너 자동 재시작 정책으로 안정성 보강. 화자 구간을 clip_timestamps로 변환하는 화자별 전사는 구현했으나 품질 미달로 미적용"
     },
     {
       "name": "Speaker Diarization",
       "company": "MiCo AI",
       "period": "2025.04 ~ 2025.07",
-      "role": "화자 분할 파인튜닝",
-      "summary": "Pyannote 사전 학습 모델 파인튜닝(데이터 수집·파라미터 튜닝·학습), 화자 분할-STT 연동 파이프라인 작업"
+      "role": "화자 분할 모델 평가·파인튜닝 (미채택)",
+      "summary": "자사 메신저 제품의 영상통화 회의록·전사에 화자 구분이 필요해 Pyannote 사전 학습 모델을 평가하고 공개 데이터로 파인튜닝 시도. 데이터 양·라벨 부족으로 DER 개선이 없어 미채택 — 판정 근거를 남기고 종료, STT 결합까지 가지 않음"
     },
     {
       "name": "Kubernetes 기반 AI 인프라",
       "company": "인피닉",
       "period": "2024.03 ~ 2025.04",
-      "role": "회사 최초 K8s 플랫폼 구축",
-      "summary": "온프레미스 클러스터에 사내 최초 K8s 도입 — 운영 환경 분석부터 아키텍처 설계·배포·운영까지 전 과정. MetalLB LoadBalancer, Nginx Ingress, NFS PV/PVC, Deployment/StatefulSet 배포. GitLab→Jenkins/Argo Workflow→Harbor→ArgoCD CI/CD, Prometheus/Grafana/AlertManager + Loki/ELK. 20개+ ML 모델 자동 배포, 장애 대응·리소스 관리"
+      "role": "3인 인프라 팀 — 관측성·스토리지 담당",
+      "summary": "AI 서비스 20여 개를 수동 배포해 1회에 수 시간이 걸리던 상황. 인프라 엔지니어 3인이 온프레미스에 사내 최초 Kubernetes 플랫폼을 구축했고, 본인은 관측성 전 계층과 스토리지를 담당. 관측 스택 5종 단독 구축(Prometheus 지표·Grafana 대시보드·AlertManager 경보·Elasticsearch·Loki — 온프레미스라 직접 설치·운영), NFS 기반 PV/PVC로 모델 가중치·데이터 영속 볼륨 구성. 클러스터·네트워크(MetalLB, Nginx Ingress)와 GitLab→Jenkins·Argo Workflow→Harbor→ArgoCD GitOps 파이프라인은 팀 구성, 20여 개 ML 모델 자동 배포는 팀 성과"
     },
     {
       "name": "NLP 텍스트 요약",
       "company": "인피닉",
       "period": "2024.01 ~ 2024.07",
       "role": "요약 시스템 개발",
-      "summary": "부재 후 복귀 시 쌓인 단체방 대화 파악이 오래 걸리는 문제에서 출발. 대화 요약 BART(R3F 정규화 파인튜닝), 문서 요약 T5. 한국어 대화-요약 쌍 데이터 수집·전처리, ROUGE+휴먼 평가. 사내 메신저에 적용 — 공지 한 줄 요약, 업무 대화 2초대 요약"
+      "summary": "부재 후 복귀 시 쌓인 단체방 대화 파악이 오래 걸리는 문제에서 출발. 대화 요약 BART(R3F 정규화 파인튜닝), 문서 요약 T5. 한국어 대화-요약 쌍 데이터 수집·전처리, ROUGE+사내 휴먼 평가. 사내 메신저(전 직원 약 300명)에 실제 적용 — 공지 한 줄 요약, 업무 대화 2초대 요약"
     },
     {
       "name": "생성모델 연구 (Latent Diffusion)",
@@ -112,7 +112,7 @@
       "name": "금융 데이터 파이프라인",
       "company": "큐헷지",
       "period": "2020.09 ~ 2021.09",
-      "role": "인턴",
+      "role": "계약직",
       "summary": "금융 데이터 크롤링, Pandas/NumPy 기반 정제·검증·저장 자동화 파이프라인"
     },
     {
@@ -120,7 +120,21 @@
       "company": "개인 프로젝트",
       "period": "2026.07",
       "role": "개인 구축",
-      "summary": "LangGraph 기반 self-corrective RAG + Tool-Calling + Multi-Agent(Planner-Workers-Synthesizer) + MCP 클라이언트 레이어. FAISS+BM25 하이브리드(RRF), 평가 루프로 결함 7건 발견·수정, 검색/생성 분리 평가로 검색 실패를 격리·수정(마크다운 정제+한글 bigram BM25, recall@1 80%·recall@6 100%, 엄격 채점 정답률 70%). github.com/ckc5800/rag-agent"
+      "summary": "LangGraph 기반 self-corrective RAG + Tool-Calling + Multi-Agent(Planner-Workers-Synthesizer) + MCP 클라이언트 레이어. FAISS+BM25 하이브리드(RRF). 평가셋을 10 → 51 → 140문항으로 늘려가며 검색/생성을 분리 측정 — 현재 140문항 84.3%. 코퍼스를 54 → 842청크(15.6배)로 늘린 뒤 튜닝값 전수 재검증, 채점기 자체 결함을 찾아 6%p 정정. github.com/ckc5800/rag-agent"
+    },
+    {
+      "name": "한국어 멀티모달 상품 검색 (visual-search)",
+      "company": "개인 프로젝트",
+      "period": "2026.08",
+      "role": "개인 구축",
+      "summary": "패션 상품 44,072개 CLIP 인덱스를 한국어 문장형 질의로 검색. 임베딩 단독의 세부 조건 약점을 gold 크기 구간별로 분해해 규명(gold≤50 precision@10 0.10)한 뒤 질의에서 색·성별·용도를 뽑아 메타 필터로 결합 — hit@10 90% → 98%. 같은 이미지 인덱스에서 텍스트 경로만 바꿔 다국어 전략 6종 실측 비교(m-clip 48% < 소형 MT 86% < LLM+커머스 용어집 92%) — 번역기는 크기순이 아님. github.com/ckc5800/visual-search"
+    },
+    {
+      "name": "수요 예측 × 시계열 파운데이션 모델 (demand-forecast)",
+      "company": "개인 프로젝트",
+      "period": "2026.08",
+      "role": "개인 구축",
+      "summary": "M5 월마트 일별 판매 30,490 시리즈에 h=28 롤링 오리진 백테스트를 구축해 제로샷 Chronos와 튜닝 베이스라인을 비교. 계층 레벨에서 판정 역전을 실측 — 판매 0이 55%인 바닥 레벨은 28일 이동평균이 RMSSE 1위(0.741), 집계 레벨은 제로샷 Chronos가 전 레벨 1위(전사 0.675). 지표·집계 방식이 결론을 바꾸는 지점을 문서화. github.com/ckc5800/demand-forecast"
     },
     {
       "name": "Portfolio MCP Server",
