@@ -127,7 +127,7 @@
       "company": "개인 프로젝트",
       "period": "2026.07",
       "role": "개인 구축",
-      "summary": "LangGraph 기반 self-corrective RAG + Tool-Calling + Multi-Agent(Planner-Workers-Synthesizer) + MCP 클라이언트 레이어. FAISS+BM25 하이브리드(RRF). 평가셋을 10 → 51 → 140문항으로 늘려가며 검색/생성을 분리 측정 — 현재 140문항 84.3%. 코퍼스를 54 → 842청크(15.6배)로 늘린 뒤 튜닝값 전수 재검증, 채점기 자체 결함을 찾아 6%p 정정. github.com/ckc5800/rag-agent"
+      "summary": "LangGraph 기반 self-corrective RAG + Tool-Calling + Multi-Agent(Planner-Workers-Synthesizer) + MCP 클라이언트 레이어. FAISS+BM25 하이브리드(RRF). 평가셋을 10 → 51 → 140문항으로 늘려가며 검색/생성을 분리 측정 — 현재 140문항 80.7·81.4%(같은 조건 2회). 코퍼스를 54 → 842청크(15.6배)로 늘린 뒤 튜닝값 전수 재검증, 채점기 자체 결함을 찾아 6%p 정정. github.com/ckc5800/rag-agent"
     },
     {
       "name": "한국어 PDF 전처리 × RAG 검색 품질 벤치마크 (rag-preprocess-bench)",
