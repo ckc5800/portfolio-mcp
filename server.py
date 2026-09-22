@@ -223,6 +223,46 @@ def _load_kb():
 
 DOCS, CHUNKS, BM25 = _load_kb()
 
+def _data_mtime() -> float:
+    """데이터 파일 중 가장 최근 수정 시각. 내용이 바뀌었는지 판별하는 값."""
+    paths = [PROFILE_PATH, *sorted(DOCS_DIR.glob("*.md"))]
+    return max((p.stat().st_mtime for p in paths if p.exists()), default=0.0)
+
+
+_DATA_MTIME = _data_mtime()
+
+
+def _refresh_if_changed() -> None:
+    """데이터 파일이 바뀌었으면 다시 읽는다.
+
+    서버는 stdio 로 한 번 떠서 오래 살아 있다. 그동안 profile.json 이나
+    docs/*.md 를 고치면, 재시작 전까지 낡은 사실을 계속 내려보낸다
+    (2026-09-22 실측: 고객사명을 지운 뒤에도 옛 값이 그대로 응답됨).
+    그래서 도구 호출마다 mtime 을 보고 바뀐 경우에만 다시 읽는다.
+    읽기 실패 시에는 직전 상태를 유지한다 — 편집 도중의 반쪽 파일로
+    서버가 죽는 것보다, 낡았지만 온전한 데이터를 내려보내는 편이 낫다.
+    """
+    global DOCS, CHUNKS, BM25, PROFILE, _VOCAB, _COMPLETION_VOCAB, _DATA_MTIME
+    now = _data_mtime()
+    if now <= _DATA_MTIME:
+        return
+    try:
+        docs, chunks, bm25 = _load_kb()
+        profile = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        _DATA_MTIME = now   # 같은 실패를 매 호출마다 반복하지 않는다
+        return
+    DOCS, CHUNKS, BM25, PROFILE = docs, chunks, bm25, profile
+    _VOCAB = {run for c in CHUNKS
+              for run in _RUNS.findall((c["section"] + " " + c["text"]).lower())}
+    _COMPLETION_VOCAB = _dedupe_ci(
+        {p["name"] for p in PROFILE["projects"]}
+        | {s for group in PROFILE["skills"].values() for s in group}
+        | _heading_terms()
+        | _corpus_terms()
+    )
+    _DATA_MTIME = now
+
 # 코퍼스에 실재하는 '온전한' 토큰 집합. bigram으로 만들어 낸 조각은 넣지 않는다.
 _VOCAB = {run for c in CHUNKS
           for run in _RUNS.findall((c["section"] + " " + c["text"]).lower())}
@@ -566,6 +606,7 @@ async def portfolio_search(
     제공하지 않는 세부 내용을 찾을 때 사용한다.
     출처 파일명과 함께 관련 청크를 반환한다.
     """
+    _refresh_if_changed()
     tokens = _tokenize(query)
     scores = BM25.get_scores(tokens)
     # 코퍼스에 실재하는 단어가 질의에 있으면 문턱을 걷는다. 없으면 bigram이
@@ -610,6 +651,7 @@ async def portfolio_list_projects(
     검증된 수치·성과만 수록되어 있다. 특정 프로젝트의 기술 세부사항이
     필요하면 portfolio_search로 이어서 검색한다.
     """
+    _refresh_if_changed()
     projects = PROFILE["projects"]
     if company:
         projects = [p for p in projects if _company_matches(company, p["company"])]
@@ -634,6 +676,7 @@ async def portfolio_list_projects(
 )
 async def portfolio_get_publications() -> PublicationsOutput:
     """이윤선의 논문(제1저자 7편), 특허(제1발명자 2건), 수상 내역을 반환한다."""
+    _refresh_if_changed()
     return {
         "publications": PROFILE["publications"],
         "patents": PROFILE["patents"],
@@ -656,6 +699,7 @@ async def portfolio_get_profile() -> ProfileOutput:
 
     대화 시작 시 전체 맥락을 잡는 용도로 먼저 호출하기에 적합하다.
     """
+    _refresh_if_changed()
     return {
         "name": PROFILE["name"],
         "title": PROFILE["title"],
@@ -751,6 +795,7 @@ async def portfolio_get_company_info(
     반환된 homepage URL을 웹에서 직접 열람하거나 검색하라. homepage가
     없는 회사는 공식 사이트를 확인하지 못한 곳이다(추측해서 채우지 않았다).
     """
+    _refresh_if_changed()
     companies = [c for c in PROFILE["career"]
                  if not company or company in c["company"]]
     if not companies:
