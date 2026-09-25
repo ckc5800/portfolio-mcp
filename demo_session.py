@@ -41,6 +41,23 @@ async def main():
             print(f"  → [{r['source']}] {' '.join(r['text'].split())[:100]}...")
             print()
 
+            d = await call("portfolio_check_skill", {"skill": "Triton"},
+                           "Triton 서빙 해봤어?  (스택·프로젝트·문서 근거를 함께)")
+            print(f"  → 스택 등재 {d['in_stack']}({d.get('stack_category')}) · "
+                  f"프로젝트 {len(d['projects'])}건 · 문서 근거 {len(d['documents'])}건")
+            d = await call("portfolio_check_skill", {"skill": "Rust"},
+                           "Rust 는?  (없는 경험은 없다고 답해야 한다)")
+            print(f"  → found={d['found']} — {(d.get('hint') or '')[:46]}")
+            print()
+
+            d = await call("portfolio_get_timeline", {"kind": "career"},
+                           "경력 몇 년이야?  (기간 계산은 서버가 한다)")
+            m = d["total_career_months"]
+            print(f"  → 재직 {len(d['entries'])}곳 · 합계 {m}개월 = {m // 12}년 {m % 12}개월 "
+                  f"(as_of {d['as_of']})")
+            print(f"  → 출처: {d['source']}")
+            print()
+
             print("> TTS 딥다이브 문서 전문 읽어줘")
             print("  [resource] portfolio://docs/tts-deepdive.md")
             res = await session.read_resource("portfolio://docs/tts-deepdive.md")

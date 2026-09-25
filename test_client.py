@@ -69,8 +69,8 @@ async def main() -> int:
             print(f"프롬프트 {len(prompts.prompts)}개 등록:")
             for p in prompts.prompts:
                 print(f"  - {p.name}")
-            if len(prompts.prompts) != 2:
-                print(f"[FAIL] 프롬프트 2개 기대, {len(prompts.prompts)}개 등록됨")
+            if len(prompts.prompts) != 3:
+                print(f"[FAIL] 프롬프트 3개 기대, {len(prompts.prompts)}개 등록됨")
                 failures += 1
 
             # 인자가 본문에 실제로 들어가고, 도구 사용 안내가 포함되는지
@@ -129,6 +129,12 @@ async def main() -> int:
                 ("portfolio_get_timeline", {"kind": "all"},
                  lambda d: {e["kind"] for e in d["entries"]} >=
                  {"career", "project", "publication", "patent", "education"}),
+                # 출처 표기 — 어느 파일의 언제 상태인지 함께 와야 한다
+                ("portfolio_get_profile", {},
+                 lambda d: "profile.json" in (d.get("source") or "")),
+                # offset — 앞 결과와 겹치지 않아야 페이지 넘김이 의미가 있다
+                ("portfolio_search", {"query": "TTS", "top_k": 2, "offset": 2},
+                 lambda d: has_results(d)),
                 # 기술 경험 — 있는 것은 근거와 함께, 없는 것은 없다고
                 ("portfolio_check_skill", {"skill": "Triton"},
                  lambda d: d["found"] and d["in_stack"] and bool(d["documents"])),

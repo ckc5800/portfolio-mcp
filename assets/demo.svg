@@ -1,47 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 490" font-family="'Cascadia Code', Consolas, 'D2Coding', monospace" font-size="14">
-  <rect width="860" height="490" rx="10" fill="#1e1e2e"/>
-  <rect width="860" height="34" rx="10" fill="#181825"/>
-  <rect y="24" width="860" height="10" fill="#181825"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 638" font-family="'Cascadia Code', Consolas, 'D2Coding', monospace" font-size="14">
+  <rect width="900" height="638" rx="10" fill="#1e1e2e"/>
+  <rect width="900" height="34" rx="10" fill="#181825"/>
+  <rect y="24" width="900" height="10" fill="#181825"/>
   <circle cx="22" cy="17" r="6" fill="#f38ba8"/>
   <circle cx="42" cy="17" r="6" fill="#f9e2af"/>
   <circle cx="62" cy="17" r="6" fill="#a6e3a1"/>
-  <text x="430" y="22" fill="#6c7086" text-anchor="middle" font-size="12">portfolio-mcp · 실제 MCP 세션 리플레이</text>
+  <text x="450" y="22" fill="#6c7086" text-anchor="middle" font-size="12">portfolio-mcp · 실제 MCP 세션 리플레이</text>
 
   <g fill="#cdd6f4">
     <text x="24" y="62" fill="#9399b2" opacity="0">$ python demo_session.py
       <animate attributeName="opacity" from="0" to="1" begin="0.3s" dur="0.2s" fill="freeze"/></text>
-    <text x="24" y="86" fill="#9399b2" opacity="0">MCP 서버 연결됨: 도구 7개 · 리소스 6개 · 프롬프트 2개
+    <text x="24" y="86" fill="#9399b2" opacity="0">MCP 서버 연결됨: 도구 10개 · 리소스 6개 · 프롬프트 3개
       <animate attributeName="opacity" from="0" to="1" begin="0.9s" dur="0.2s" fill="freeze"/></text>
 
     <text x="24" y="122" font-weight="bold" opacity="0">&gt; 이윤선이 누구야?
       <animate attributeName="opacity" from="0" to="1" begin="1.8s" dur="0.2s" fill="freeze"/></text>
     <text x="40" y="146" fill="#89dceb" opacity="0">[tool call] portfolio_get_profile({})  <tspan fill="#6c7086">(structured output이라 파싱 불필요)</tspan>
-      <animate attributeName="opacity" from="0" to="1" begin="2.7s" dur="0.2s" fill="freeze"/></text>
-    <text x="40" y="170" fill="#a6e3a1" opacity="0">→ 이윤선 (Lee Yoon Seon), 6년차 AI 엔지니어: AI·MLOps, 프로덕션 ML 시스템
-      <animate attributeName="opacity" from="0" to="1" begin="3.5s" dur="0.2s" fill="freeze"/></text>
+      <animate attributeName="opacity" from="0" to="1" begin="2.6s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="170" fill="#a6e3a1" opacity="0">→ 이윤선 (Lee Yoon Seon), 6년차 AI Inference/Serving Engineer
+      <animate attributeName="opacity" from="0" to="1" begin="3.3s" dur="0.2s" fill="freeze"/></text>
     <text x="40" y="194" fill="#a6e3a1" opacity="0">→ 경력: MiCo AI / 인피닉 / 이든티앤에스 / 큐헷지 / KISTI
-      <animate attributeName="opacity" from="0" to="1" begin="4.1s" dur="0.2s" fill="freeze"/></text>
+      <animate attributeName="opacity" from="0" to="1" begin="3.9s" dur="0.2s" fill="freeze"/></text>
 
     <text x="24" y="230" font-weight="bold" opacity="0">&gt; 팝 노이즈를 어떻게 해결했어?  <tspan fill="#6c7086" font-weight="normal">(조사가 붙어도 한글 bigram으로 매칭)</tspan>
-      <animate attributeName="opacity" from="0" to="1" begin="5.2s" dur="0.2s" fill="freeze"/></text>
+      <animate attributeName="opacity" from="0" to="1" begin="4.9s" dur="0.2s" fill="freeze"/></text>
     <text x="40" y="254" fill="#89dceb" opacity="0">[tool call] portfolio_search({"query": "팝 노이즈를 어떻게 해결했어", "top_k": 1})
-      <animate attributeName="opacity" from="0" to="1" begin="6.1s" dur="0.2s" fill="freeze"/></text>
+      <animate attributeName="opacity" from="0" to="1" begin="5.7s" dur="0.2s" fill="freeze"/></text>
     <text x="40" y="278" fill="#a6e3a1" opacity="0">→ [tts-deepdive.md] - **Frontend 잔여 버퍼(Residual Buffer) 설계**: 프론트엔드(…
-      <animate attributeName="opacity" from="0" to="1" begin="7.0s" dur="0.2s" fill="freeze"/></text>
+      <animate attributeName="opacity" from="0" to="1" begin="6.4s" dur="0.2s" fill="freeze"/></text>
 
-    <text x="24" y="314" font-weight="bold" opacity="0">&gt; TTS 딥다이브 문서 전문 읽어줘
+    <text x="24" y="314" font-weight="bold" opacity="0">&gt; Triton 서빙 해봤어?  <tspan fill="#6c7086" font-weight="normal">(스택·프로젝트·문서 근거를 함께)</tspan>
+      <animate attributeName="opacity" from="0" to="1" begin="7.4s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="338" fill="#89dceb" opacity="0">[tool call] portfolio_check_skill({"skill": "Triton"})
       <animate attributeName="opacity" from="0" to="1" begin="8.1s" dur="0.2s" fill="freeze"/></text>
-    <text x="40" y="338" fill="#b4befe" opacity="0">[resource] portfolio://docs/tts-deepdive.md
-      <animate attributeName="opacity" from="0" to="1" begin="9.0s" dur="0.2s" fill="freeze"/></text>
-    <text x="40" y="362" fill="#a6e3a1" opacity="0">→ 마크다운 전문 10,087자. 검색 결과가 잘렸을 때 이어 읽는 경로
-      <animate attributeName="opacity" from="0" to="1" begin="9.8s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="362" fill="#a6e3a1" opacity="0">→ 스택 등재 True(serving) · 프로젝트 1건 · 문서 근거 2건
+      <animate attributeName="opacity" from="0" to="1" begin="8.7s" dur="0.2s" fill="freeze"/></text>
 
-    <text x="24" y="398" font-weight="bold" opacity="0">&gt; (프롬프트) tech_deep_dive(topic='TTFB 최적화')
-      <animate attributeName="opacity" from="0" to="1" begin="10.9s" dur="0.2s" fill="freeze"/></text>
-    <text x="40" y="422" fill="#a6e3a1" opacity="0">→ "이윤선의 포트폴리오에서 'TTFB 최적화' 관련 경험을 깊게 조사해 주세요."
-      <animate attributeName="opacity" from="0" to="1" begin="11.8s" dur="0.2s" fill="freeze"/></text>
+    <text x="24" y="398" font-weight="bold" opacity="0">&gt; Rust 는?  <tspan fill="#6c7086" font-weight="normal">(없는 경험은 없다고 답해야 한다)</tspan>
+      <animate attributeName="opacity" from="0" to="1" begin="9.5s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="422" fill="#89dceb" opacity="0">[tool call] portfolio_check_skill({"skill": "Rust"})
+      <animate attributeName="opacity" from="0" to="1" begin="10.2s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="446" fill="#f9e2af" opacity="0">→ found=False — 이 기술을 다룬 기록이 없습니다. 없는 경험을 지어내지 말고…
+      <animate attributeName="opacity" from="0" to="1" begin="10.8s" dur="0.2s" fill="freeze"/></text>
 
-    <text x="24" y="458" fill="#9399b2" opacity="0">$ <tspan fill="#cdd6f4">▌</tspan>
-      <animate attributeName="opacity" from="0" to="1" begin="12.8s" dur="0.2s" fill="freeze"/></text>
+    <text x="24" y="482" font-weight="bold" opacity="0">&gt; 경력 몇 년이야?  <tspan fill="#6c7086" font-weight="normal">(기간 계산은 서버가 한다)</tspan>
+      <animate attributeName="opacity" from="0" to="1" begin="11.6s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="506" fill="#89dceb" opacity="0">[tool call] portfolio_get_timeline({"kind": "career"})
+      <animate attributeName="opacity" from="0" to="1" begin="12.3s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="530" fill="#a6e3a1" opacity="0">→ 재직 5곳 · 합계 68개월 = 5년 8개월 (as_of 2026.09)
+      <animate attributeName="opacity" from="0" to="1" begin="12.9s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="554" fill="#a6e3a1" opacity="0">→ 출처: data/profile.json·data/docs (갱신 2026-09-25)
+      <animate attributeName="opacity" from="0" to="1" begin="13.5s" dur="0.2s" fill="freeze"/></text>
+
+    <text x="24" y="590" font-weight="bold" opacity="0">&gt; (프롬프트) job_fit(requirements='Triton 서빙, Rust, Kubernetes 운영')
+      <animate attributeName="opacity" from="0" to="1" begin="14.3s" dur="0.2s" fill="freeze"/></text>
+    <text x="40" y="614" fill="#a6e3a1" opacity="0">→ "요건 | 판정 | 근거 | 기간 표로 정리 — 충족 / 부분 / 근거 없음 셋만 사용"
+      <animate attributeName="opacity" from="0" to="1" begin="15.0s" dur="0.2s" fill="freeze"/></text>
   </g>
 </svg>

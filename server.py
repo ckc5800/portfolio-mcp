@@ -434,6 +434,40 @@ def candidate_briefing(focus: str = "") -> str:
     )
 
 
+@mcp.prompt(name="job_fit", title="공고 요건 대조")
+def job_fit(requirements: str) -> str:
+    """채용 공고의 자격 요건을 한 줄씩 근거와 대조하게 한다.
+
+    requirements: 공고의 자격 요건. 줄바꿈이나 쉼표로 구분한 목록.
+    """
+    template = """
+아래 채용 요건을 이윤선의 포트폴리오와 한 줄씩 대조해 주세요.
+
+[요건]
+{requirements}
+
+진행 방법
+1. 요건을 개별 항목으로 나눕니다.
+2. 항목마다 portfolio_check_skill 을 호출해 스택 등재 여부·관련 프로젝트·
+   문서 근거를 받습니다.
+3. 근거가 나온 프로젝트는 portfolio_get_project 로 기간과 역할까지 확인합니다.
+   기간을 비교해야 하면 portfolio_get_timeline 을 쓰고 직접 계산하지 마세요.
+4. 표로 정리합니다 — 요건 | 판정 | 근거(프로젝트·수치·문서) | 기간.
+
+판정은 셋 중 하나만 씁니다.
+  충족      프로젝트와 수치로 뒷받침되는 경우
+  부분      인접 경험은 있으나 그 기술 자체의 기록은 없는 경우
+  근거 없음  도구가 기록을 찾지 못한 경우
+
+규칙
+- found=false 인 항목을 "비슷한 경험이 있다"로 바꾸지 마세요. 없는 것은
+  없다고 적고, 가장 가까운 실제 경험을 따로 한 줄 덧붙이세요.
+- 수치는 도구가 돌려준 값만 쓰고 반올림하지 마세요.
+- 각 도구 응답의 source 필드(데이터 갱신일)를 표 아래 한 줄로 밝혀 주세요.
+"""
+    return template.format(requirements=requirements.strip())
+
+
 @mcp.prompt(name="tech_deep_dive", title="기술 딥다이브")
 def tech_deep_dive(topic: str) -> str:
     """특정 기술 주제에서 이윤선이 실제로 한 일을 깊게 조사하게 한다.
