@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  도구를 조합해야 풀리는 질문 10개.
+
+  기준 세 가지.
+   1. 한 도구의 응답을 그대로 베끼면 안 되고, 두 개 이상을 엮거나 계산이 필요할 것
+   2. 답이 시간이 지나도 변하지 않을 것 ("현재 진행 중" 같은 질문은 넣지 않음)
+   3. 문자열 비교로 채점 가능할 것
+
+  run_eval.py 가 tools 에 적힌 호출을 실제로 실행하고, 그 출력 안에
+  answer 문자열이 있는지 확인한다. 즉 "도구만으로 답에 도달할 수 있는가"를
+  재는 것이지 LLM 의 추론 품질을 재는 것이 아니다. 후자는 클라이언트 몫이라
+  이 저장소에서 재지 않는다.
+-->
+<evaluation>
+  <qa_pair>
+    <question>인피닉에서 수행한 프로젝트 가운데 기간이 가장 긴 것은 몇 개월인가?</question>
+    <answer>8</answer>
+    <tools>portfolio_get_timeline(kind=project)</tools>
+    <why>K8s 인프라 2024.08~2025.04 가 8개월로 최장. 전차 탐지 7 · NLP 6 · seg3d 4 · Latent 3</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>큐헷지와 이든티앤에스 중 더 오래 근무한 곳의 재직 개월 수는?</question>
+    <answer>12</answer>
+    <tools>portfolio_get_timeline(kind=career)</tools>
+    <why>큐헷지 2020.09~2021.09 12개월 vs 이든티앤에스 2022.04~2022.08 4개월</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>등록된 특허 두 건의 등록일은 언제인가?</question>
+    <answer>2023.05.25</answer>
+    <tools>portfolio_get_publications()</tools>
+    <why>두 건 모두 같은 날 등록(출원은 2023.03.07)</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>제1저자 논문 중 가장 먼저 게재된 것의 게재 연월은?</question>
+    <answer>2018.06</answer>
+    <tools>portfolio_get_timeline(kind=publication)</tools>
+    <why>한국정보기술학회 2018.06 이 ICEMT 2018.07 보다 앞섬</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>TTS 스트리밍 API 리팩토링에서 TTFB 는 몇 ms 로 줄었는가?</question>
+    <answer>985</answer>
+    <tools>portfolio_list_projects(company=MiCo AI)</tools>
+    <why>1,943ms → 985ms, 같은 텍스트를 양쪽 엔드포인트로 완주시킨 비교</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Kubernetes 관측 스택 5종 중 온프레미스라 직접 설치해 운영한 로그 도구 두 개는?</question>
+    <answer>Elasticsearch</answer>
+    <tools>portfolio_search(query=관측 스택 로그 Elasticsearch Loki)</tools>
+    <why>지표·경보는 Prometheus·Grafana·AlertManager, 로그는 Elasticsearch·Loki</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>STT 배포에서 사용한 Whisper 모델의 정확한 이름은?</question>
+    <answer>large-v3-turbo</answer>
+    <tools>portfolio_search(query=STT 엔진 Whisper 모델, source=resume.md)</tools>
+    <why>Whisper-large-v3-turbo (Faster Whisper 런타임)</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>vLLM-Omni 메모리 누수 조사에서 부하·할당자·캐시가 달라도 일정했던 값은 abort 당 몇 KB 범위였는가?</question>
+    <answer>36~56 KB</answer>
+    <tools>portfolio_search(query=abort 누수 불변량 KB)</tools>
+    <why>증가율은 13배 차이 나도 abort 당 36~56 KB 로 일정 — 원인 특정의 근거</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Qwen3-TTS 플랫폼이 지원하는 언어는 모두 몇 개인가?</question>
+    <answer>32</answer>
+    <tools>portfolio_search(query=지원 언어 vLLM Supertonic, source=resume.md)</tools>
+    <why>vLLM 10 · Supertonic 31, 중복을 빼면 32</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>예지보전 프로젝트에서 공식 test 셋 기준 RUL 평균 오차(MAE)는 몇 사이클 범위인가?</question>
+    <answer>15.8~23.0</answer>
+    <tools>portfolio_list_projects(company=개인 프로젝트)</tools>
+    <why>자명한 대조군과 비교한 뒤의 값. 고정 horizon 기준 12.9 와 혼동하지 말 것</why>
+  </qa_pair>
+</evaluation>
