@@ -635,6 +635,17 @@ class CompanyOutput(TypedDict):
     hint: NotRequired[str | None]
 
 
+class SkillEvidence(TypedDict):
+    skill: str
+    found: bool
+    # profile.json 의 기술 스택에 올라 있는가 (본인이 공개적으로 내세우는 기술)
+    in_stack: bool
+    stack_category: NotRequired[str | None]
+    # 그 기술이 등장하는 프로젝트. 이름·기간·회사만 (상세는 portfolio_get_project)
+    projects: list[Project]
+    documents: list[SearchHit]
+    hint: NotRequired[str | None]
+
 class TimelineEntry(TypedDict):
     kind: str            # career | project | publication | patent | education
     label: str
@@ -1128,6 +1139,80 @@ async def portfolio_get_project(
     if not docs:
         out["hint"] = ("이 프로젝트를 다루는 문서 조각을 찾지 못했습니다. "
                        "summary 가 현재 확인된 전부입니다.")
+    return out
+
+@mcp.tool(
+    name="portfolio_check_skill",
+    annotations={
+        "title": "기술 경험 확인",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def portfolio_check_skill(
+    skill: Annotated[str, Field(
+        description="확인할 기술 (예: 'Triton', 'Kubernetes', 'Rust')",
+        min_length=1, max_length=40)],
+    max_documents: Annotated[int, Field(
+        description="근거로 붙일 문서 조각 수", ge=0, le=5)] = 2,
+) -> SkillEvidence:
+    """특정 기술을 실제로 다뤘는지, 어디서 다뤘는지 근거와 함께 답한다.
+
+    "X 경험 있나요"는 채용 검토에서 가장 자주 나오는 질문인데, 기술 스택
+    목록만 보면 나열인지 실무인지 구분되지 않는다. 이 도구는 세 가지를
+    함께 준다 — 스택 등재 여부, 그 기술이 나오는 프로젝트, 문서 근거.
+
+    found 가 false 면 "경험이 없다"는 뜻이다. 없는 경험을 있다고 만들지
+    말고 그대로 전하라. 스택에는 없지만 프로젝트·문서에는 나오는 경우도
+    있다(in_stack=false, projects 비어 있지 않음) — 그때는 "스택으로
+    내세우지는 않지만 해당 작업 기록은 있다"가 정확한 답이다.
+    """
+    _refresh_if_changed()
+    key = skill.strip().lower()
+    in_stack, category = False, None
+    for cat, items in PROFILE["skills"].items():
+        for item in items:
+            if key in item.lower():
+                in_stack, category = True, cat
+                break
+        if in_stack:
+            break
+    projects = [p for p in PROFILE["projects"]
+                if key in json.dumps(p, ensure_ascii=False).lower()]
+    docs: list[SearchHit] = []
+    if max_documents:
+        tokens = _tokenize(skill)
+        scores = BM25.get_scores(tokens)
+        ranked = sorted(range(len(CHUNKS)), key=lambda i: scores[i], reverse=True)
+        docs = [
+            {"source": CHUNKS[i]["source"],
+             "section": CHUNKS[i]["section"],
+             "resource": f"portfolio://docs/{CHUNKS[i]['source']}",
+             "score": round(float(scores[i]), 2),
+             "text": _snippet(CHUNKS[i]["text"])}
+            for i in ranked[:max_documents]
+            # 점수만 보면 조각 토큰이 스쳐도 걸린다. 실제로 그 단어가
+            # 들어 있는 청크만 근거로 인정한다
+            if scores[i] > 0 and key in CHUNKS[i]["text"].lower()
+        ]
+    out: SkillEvidence = {
+        "skill": skill,
+        "found": bool(in_stack or projects or docs),
+        "in_stack": in_stack,
+        "projects": projects,
+        "documents": docs,
+    }
+    if category:
+        out["stack_category"] = category
+    if not out["found"]:
+        cats = {c: v for c, v in PROFILE["skills"].items()}
+        out["hint"] = ("이 기술을 다룬 기록이 없습니다. 없는 경험을 지어내지 "
+                       f"말고 그대로 전하세요. 보유 기술: {cats}")
+    elif not in_stack:
+        out["hint"] = ("기술 스택 목록에는 없지만 프로젝트·문서에 등장합니다. "
+                       "'스택으로 내세우지는 않으나 작업 기록은 있다'가 정확합니다.")
     return out
 
 if __name__ == "__main__":

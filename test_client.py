@@ -38,7 +38,7 @@ async def main() -> int:
             print(f"도구 {len(tools.tools)}개 등록:")
             for t in tools.tools:
                 print(f"  - {t.name}")
-            if len(tools.tools) != 9:
+            if len(tools.tools) != 10:
                 print(f"[FAIL] 도구 수 7개 기대, {len(tools.tools)}개 등록됨")
                 failures += 1
 
@@ -129,6 +129,13 @@ async def main() -> int:
                 ("portfolio_get_timeline", {"kind": "all"},
                  lambda d: {e["kind"] for e in d["entries"]} >=
                  {"career", "project", "publication", "patent", "education"}),
+                # 기술 경험 — 있는 것은 근거와 함께, 없는 것은 없다고
+                ("portfolio_check_skill", {"skill": "Triton"},
+                 lambda d: d["found"] and d["in_stack"] and bool(d["documents"])),
+                # 없는 기술을 있다고 하면 안 된다. 지어내지 말라는 지시도 함께
+                ("portfolio_check_skill", {"skill": "Rust"},
+                 lambda d: not d["found"] and not d["projects"]
+                 and "지어내지" in (d.get("hint") or "")),
                 # 프로젝트 상세 — 확정 사실과 근거 문서가 함께 와야 한다
                 ("portfolio_get_project", {"name": "Qwen3"},
                  lambda d: d["project"]["months"] > 0

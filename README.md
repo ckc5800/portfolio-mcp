@@ -34,8 +34,9 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 | `portfolio_get_company_info` | 재직 회사의 기간·직급·검증된 공식 홈페이지 |
 | `portfolio_get_timeline` | 경력·프로젝트·논문·특허·학력을 시작순 정렬 + 개월 수 계산 |
 | `portfolio_get_project` | 프로젝트 하나의 확정 사실 + 계산된 기간 + 근거 문서 조각 |
+| `portfolio_check_skill` | 특정 기술 경험 여부를 스택·프로젝트·문서 근거와 함께 판정 |
 
-도구 9개는 텍스트 JSON과 함께 structuredContent도 내려줌.
+도구 10개는 텍스트 JSON과 함께 structuredContent도 내려줌.
 반환 타입에서 생성한 outputSchema를 클라이언트에 공개하므로, 파싱 없이 스키마가 보장된 결과를 바로 쓸 수 있음.
 
 도구 외에 MCP 리소스도 6개 노출하고, 이름으로 읽는 템플릿 `portfolio://docs/{doc_name}` 도 함께 염.

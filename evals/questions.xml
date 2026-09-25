@@ -96,4 +96,18 @@
     <why>70시간 343만 건 실패 0·재시작 0</why>
   </qa_pair>
 
+  <qa_pair>
+    <question>Triton Inference Server 를 실제로 다뤘는가? 다뤘다면 어느 분류의 기술 스택으로 올라 있는가?</question>
+    <answer>serving</answer>
+    <tools>portfolio_check_skill(skill=Triton)</tools>
+    <why>STT 배포에서 사용. 스택 분류는 serving</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Rust 를 다룬 기록이 포트폴리오에 있는가?</question>
+    <answer>false</answer>
+    <tools>portfolio_check_skill(skill=Rust)</tools>
+    <why>없음 — 없는 경험을 만들지 않는지 확인하는 문항</why>
+  </qa_pair>
+
 </evaluation>
