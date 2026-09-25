@@ -26,14 +26,15 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 | 도구 | 하는 일 |
 |---|---|
 | `portfolio_get_profile` | 경력 회사·기간·직급, 학력, 기술 스택, 링크 |
-| `portfolio_list_projects` | 프로젝트 17개 목록. 회사명 필터 지원(구 사명도 인식) |
+| `portfolio_list_projects` | 프로젝트 21개 목록. 회사명 필터 지원(구 사명도 인식) |
 | `portfolio_get_publications` | 논문 7편(제1저자), 특허 2건(제1발명자), 수상 |
 | `portfolio_search` | 기술문서 BM25 검색. 트러블슈팅 과정 같은 세부 내용용 |
 | `portfolio_get_github_activity` | GitHub 공개 저장소 실시간 조회 (최근 푸시 순 10개) |
 | `portfolio_get_blog_posts` | 기술 블로그 최신 글 RSS 실시간 조회 (5건) |
 | `portfolio_get_company_info` | 재직 회사의 기간·직급·검증된 공식 홈페이지 |
+| `portfolio_get_timeline` | 경력·프로젝트·논문·특허·학력을 시작순 정렬 + 개월 수 계산 |
 
-도구 7개는 텍스트 JSON과 함께 structuredContent도 내려줌.
+도구 8개는 텍스트 JSON과 함께 structuredContent도 내려줌.
 반환 타입에서 생성한 outputSchema를 클라이언트에 공개하므로, 파싱 없이 스키마가 보장된 결과를 바로 쓸 수 있음.
 
 도구 외에 MCP 리소스도 6개 노출함.

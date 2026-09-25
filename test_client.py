@@ -38,7 +38,7 @@ async def main() -> int:
             print(f"도구 {len(tools.tools)}개 등록:")
             for t in tools.tools:
                 print(f"  - {t.name}")
-            if len(tools.tools) != 7:
+            if len(tools.tools) != 8:
                 print(f"[FAIL] 도구 수 7개 기대, {len(tools.tools)}개 등록됨")
                 failures += 1
 
@@ -108,6 +108,30 @@ async def main() -> int:
                 ("portfolio_get_publications", {},
                  lambda d: len(d.get("patents", [])) == 2 and bool(d.get("award"))),
                 ("portfolio_search", {"query": "TTFB 최적화", "top_k": 2}, has_results),
+                # 문서 필터 — 지정한 문서에서만 나와야 한다
+                ("portfolio_search", {"query": "특허", "source": "patents"},
+                 lambda d: has_results(d) and all(
+                     "patents" in r["source"] for r in d["results"])),
+                # 없는 문서명을 주면 사용 가능한 목록을 알려줘야 한다
+                ("portfolio_search", {"query": "특허", "source": "없는문서zzz"},
+                 lambda d: not d.get("results") and "patents.md" in (d.get("hint") or "")),
+                # 문맥 포함은 인접 청크를 이어 붙이므로 더 길어야 한다
+                ("portfolio_search", {"query": "메모리 누수", "top_k": 1,
+                                      "with_context": True},
+                 lambda d: has_results(d) and len(d["results"][0]["text"]) > 900),
+                # 기간 계산은 서버가 한다 — 재직 5건이 시작순으로, 총 경력과 함께
+                ("portfolio_get_timeline", {"kind": "career"},
+                 lambda d: len(d.get("entries", [])) == 5
+                 and d["entries"] == sorted(d["entries"], key=lambda e: e["start"])
+                 and d.get("total_career_months", 0) > 60
+                 and d["entries"][-1]["ongoing"] is True),
+                # 전체 타임라인에는 논문·특허·학력도 들어온다
+                ("portfolio_get_timeline", {"kind": "all"},
+                 lambda d: {e["kind"] for e in d["entries"]} >=
+                 {"career", "project", "publication", "patent", "education"}),
+                # 잘못된 kind 는 무엇을 쓸 수 있는지 알려줘야 한다
+                ("portfolio_get_timeline", {"kind": "zzz"},
+                 lambda d: not d.get("entries") and "career" in (d.get("hint") or "")),
                 # 조사가 붙은 질의. bigram 토크나이저 이전에는 0건이었다
                 ("portfolio_search", {"query": "쿠버네티스로 뭐 했어", "top_k": 3},
                  has_results),

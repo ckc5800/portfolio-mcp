@@ -61,6 +61,8 @@ mcp = FastMCP(
         "최근 활동은 portfolio_get_github_activity(GitHub)·"
         "portfolio_get_blog_posts(블로그)로 실시간 조회하고, 재직 회사의 "
         "공식 홈페이지는 portfolio_get_company_info로 확인하라. "
+        "기간을 비교하거나 개월 수를 더해야 하면 직접 계산하지 말고 "
+        "portfolio_get_timeline을 써라(시작·종료·개월 수가 계산돼 있다). "
         "경력·수치·사실은 도구가 반환한 것만 인용하라."
     ),
 )
@@ -343,6 +345,23 @@ def _snippet(text: str, limit: int = CHUNK_SIZE) -> str:
     return text if len(text) <= limit else text[:limit] + " …(이하 생략)"
 
 
+def _with_neighbors(idx: int, window: int = 1) -> str:
+    """같은 문서의 앞뒤 청크를 이어 붙인다.
+
+    한 청크는 800자에서 끊기므로 긴 설명은 문장 중간에서 잘린다. 그때마다
+    리소스로 문서 전문(1만 자 이상)을 여는 것은 컨텍스트 낭비라, 필요한
+    만큼만 이어 준다. 문서 경계는 넘지 않는다.
+    """
+    src = CHUNKS[idx]["source"]
+    lo = idx
+    while lo - 1 >= 0 and idx - (lo - 1) <= window and CHUNKS[lo - 1]["source"] == src:
+        lo -= 1
+    hi = idx
+    while hi + 1 < len(CHUNKS) and (hi + 1) - idx <= window and CHUNKS[hi + 1]["source"] == src:
+        hi += 1
+    return (chr(10) * 2).join(CHUNKS[j]["text"] for j in range(lo, hi + 1))
+
+
 # ── Prompts ──────────────────────────────────────────────
 #
 # 도구·리소스에 이어 MCP의 세 번째 프리미티브. 클라이언트 UI가 사용자에게
@@ -581,6 +600,24 @@ class CompanyOutput(TypedDict):
     hint: NotRequired[str | None]
 
 
+class TimelineEntry(TypedDict):
+    kind: str            # career | project | publication | patent | education
+    label: str
+    start: str           # YYYY.MM (일자 정보가 없으면 그 달의 1일로 본다)
+    end: str             # YYYY.MM 또는 "현재"
+    months: int          # 시작월~종료월 포함 개월 수. 시점 항목은 0
+    ongoing: bool
+    company: NotRequired[str | None]
+    role: NotRequired[str | None]
+
+
+class TimelineOutput(TypedDict):
+    as_of: str
+    entries: list[TimelineEntry]
+    total_career_months: NotRequired[int | None]
+    hint: NotRequired[str | None]
+
+
 # ── Tools ────────────────────────────────────────────────
 
 @mcp.tool(
@@ -599,26 +636,46 @@ async def portfolio_search(
         min_length=1, max_length=200)],
     top_k: Annotated[int, Field(
         description="반환할 문서 청크 수", ge=1, le=10)] = 4,
+    source: Annotated[str, Field(
+        description="특정 문서 안에서만 검색 (예: 'resume.md', 'tts'). 빈 값이면 전체",
+        max_length=60)] = "",
+    with_context: Annotated[bool, Field(
+        description="앞뒤 청크를 이어 붙여 반환. 잘린 설명을 이어 읽을 때 사용")] = False,
 ) -> SearchOutput:
     """이윤선의 포트폴리오/기술문서에서 관련 내용을 키워드(BM25) 검색한다.
 
     프로젝트 상세, 기술적 의사결정, 트러블슈팅 과정 등 profile 도구가
     제공하지 않는 세부 내용을 찾을 때 사용한다.
     출처 파일명과 함께 관련 청크를 반환한다.
+
+    source 로 문서를 좁힐 수 있다(부분 문자열이면 된다 — 'tts' 는
+    tts-deepdive.md 에 걸린다). 사용 가능한 문서명은 결과의 source 나
+    portfolio://docs/ 리소스 목록에 있다.
+    with_context=true 면 인접 청크를 함께 이어 붙여, '(이하 생략)' 으로
+    잘린 설명을 리소스를 열지 않고도 이어 읽을 수 있다.
     """
     _refresh_if_changed()
     tokens = _tokenize(query)
     scores = BM25.get_scores(tokens)
+    allowed = None
+    if source.strip():
+        key = source.strip().lower()
+        allowed = {i for i, c in enumerate(CHUNKS) if key in c["source"].lower()}
+        if not allowed:
+            names = sorted({c["source"] for c in CHUNKS})
+            return {"results": [],
+                    "hint": f"'{source}' 문서가 없습니다. 사용 가능한 문서: {names}"}
     # 코퍼스에 실재하는 단어가 질의에 있으면 문턱을 걷는다. 없으면 bigram이
     # 우연히 스친 것뿐이라 문턱으로 막는다.
     floor = 0.0 if _has_corpus_term(query) else MIN_SCORE_PER_TOKEN * max(len(tokens), 1)
-    ranked = sorted(range(len(CHUNKS)), key=lambda i: scores[i], reverse=True)
+    pool = range(len(CHUNKS)) if allowed is None else sorted(allowed)
+    ranked = sorted(pool, key=lambda i: scores[i], reverse=True)
     results = [
         {"source": CHUNKS[i]["source"],
          "section": CHUNKS[i]["section"],
          "resource": f"portfolio://docs/{CHUNKS[i]['source']}",
          "score": round(float(scores[i]), 2),
-         "text": _snippet(CHUNKS[i]["text"])}
+         "text": _with_neighbors(i) if with_context else _snippet(CHUNKS[i]["text"])}
         # floor가 0이어도 점수 0인 청크는 결과가 아니다. 두 조건을 함께 본다
         for i in ranked[:top_k] if scores[i] > 0 and scores[i] >= floor
     ]
@@ -808,6 +865,142 @@ async def portfolio_get_company_info(
                 "직접 열람하거나 웹 검색으로 확인하세요.",
     }
 
+
+# ── 기간 계산 ─────────────────────────────────────────────
+#
+# "A와 B 중 먼저 시작한 쪽", "가장 오래 근무한 회사", "총 경력" 같은 질문은
+# 모델이 날짜 산술을 직접 하다 틀리는 자리다(rag-agent 평가에서 비교 유형이
+# 61~67%로 가장 낮았고, 실패 사례 상당수가 개월 수 계산 오류였다).
+# 문자열을 그대로 넘기지 않고 서버가 정렬·개월 수까지 계산해서 준다.
+
+_PERIOD_SEP = re.compile(r"\s*~\s*")
+_YM = re.compile(r"(\d{4})(?:[.\-/](\d{1,2}))?")
+
+
+def _parse_ym(token: str) -> tuple[int, int] | None:
+    """'2024.08' → (2024, 8). 월이 없으면 1월로 본다. 파싱 실패는 None."""
+    m = _YM.search(token)
+    if not m:
+        return None
+    year = int(m.group(1))
+    month = int(m.group(2)) if m.group(2) else 1
+    return (year, min(max(month, 1), 12))
+
+
+def _month_span(start: tuple[int, int], end: tuple[int, int]) -> int:
+    """시작월부터 종료월 직전까지의 개월 수 (종료월 미포함).
+
+    본인 이력서 표기와 같은 셈법이다. 이력서가 2026.08 시점에 "총 경력
+    5년 4개월"로 적혀 있는데, 종료월을 포함해 세면 경계 달이 두 번
+    잡혀(이든 ~2022.08 과 인피닉 2022.08~) 5년 9개월이 나온다.
+    """
+    return max((end[0] - start[0]) * 12 + (end[1] - start[1]), 0)
+
+
+def _now_ym() -> tuple[int, int]:
+    t = time.localtime()
+    return (t.tm_year, t.tm_mon)
+
+
+def _timeline_entry(kind: str, label: str, period: str,
+                    company: str | None = None, role: str | None = None):
+    """'2024.08 ~ 2025.04'·'2021'·'2025.04 ~ 현재' 를 공통 형태로 바꾼다."""
+    parts = _PERIOD_SEP.split(period.strip())
+    start = _parse_ym(parts[0])
+    if start is None:
+        return None
+    ongoing = len(parts) > 1 and ("현재" in parts[1] or "present" in parts[1].lower())
+    if ongoing:
+        end = _now_ym()
+    elif len(parts) > 1:
+        end = _parse_ym(parts[1]) or start
+    else:
+        end = start           # 단일 시점 (예: 대회 참가 "2021")
+    point = len(parts) == 1
+    entry: TimelineEntry = {
+        "kind": kind,
+        "label": label,
+        "start": "%04d.%02d" % start,
+        "end": "현재" if ongoing else "%04d.%02d" % end,
+        "months": 0 if point else _month_span(start, end),
+        "ongoing": ongoing,
+    }
+    if company:
+        entry["company"] = company
+    if role:
+        entry["role"] = role
+    return entry
+
+
+@mcp.tool(
+    name="portfolio_get_timeline",
+    annotations={
+        "title": "경력·프로젝트 타임라인 조회",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def portfolio_get_timeline(
+    kind: Annotated[str, Field(
+        description="career | project | publication | patent | education | all",
+        max_length=20)] = "all",
+) -> TimelineOutput:
+    """경력·프로젝트·논문·특허·학력을 시작 시점 순으로 정렬해 개월 수와 함께 반환한다.
+
+    "A와 B 중 먼저 시작한 것", "가장 오래 근무한 회사", "총 경력"처럼
+    날짜를 비교하거나 기간을 더하는 질문에는 이 도구를 쓴다. 문자열 기간을
+    직접 계산하지 말 것 — start/end/months 가 이미 계산된 값이다.
+    months 는 종료월 직전까지 센 값이다(이력서 표기와 같은 셈법).
+    ongoing 이 true 면 end 는 오늘(as_of) 기준이다. 단일 시점 항목(대회·
+    논문·특허·학위)은 months 가 0 이다.
+    """
+    _refresh_if_changed()
+    want = kind.strip().lower() or "all"
+    entries: list[TimelineEntry] = []
+    if want in ("all", "career"):
+        for c in PROFILE["career"]:
+            e = _timeline_entry("career", c["company"], c["period"],
+                                company=c["company"], role=c.get("role"))
+            if e:
+                entries.append(e)
+    if want in ("all", "project"):
+        for pj in PROFILE["projects"]:
+            e = _timeline_entry("project", pj["name"], pj["period"],
+                                company=pj.get("company"), role=pj.get("role"))
+            if e:
+                entries.append(e)
+    if want in ("all", "publication"):
+        for pub in PROFILE["publications"]:
+            e = _timeline_entry("publication", pub["title"], pub.get("year", ""))
+            if e:
+                entries.append(e)
+    if want in ("all", "patent"):
+        for pt in PROFILE["patents"]:
+            e = _timeline_entry("patent", pt["title"], pt.get("date", ""))
+            if e:
+                entries.append(e)
+    if want in ("all", "education"):
+        for ed in PROFILE["education"]:
+            e = _timeline_entry("education", f"{ed['degree']} · {ed['school']}",
+                                ed.get("year", ""))
+            if e:
+                entries.append(e)
+    if not entries:
+        return {"as_of": "%04d.%02d" % _now_ym(), "entries": [],
+                "hint": "kind 는 career · project · publication · patent · "
+                        "education · all 중 하나입니다."}
+    entries.sort(key=lambda e: (e["start"], e["label"]))
+    out: TimelineOutput = {"as_of": "%04d.%02d" % _now_ym(), "entries": entries}
+    if want in ("all", "career"):
+        # 재직 기간은 겹치지 않으므로 단순 합이 총 경력이다
+        out["total_career_months"] = sum(e["months"] for e in entries
+                                         if e["kind"] == "career")
+        out["hint"] = ("total_career_months 는 재직 이력 전체의 합이며 "
+                       "KISTI(파트타임 3개월)를 포함한다. 정규직만 세려면 "
+                       "role 이 Part-time 인 항목을 빼라.")
+    return out
 
 if __name__ == "__main__":
     mcp.run()  # stdio transport
