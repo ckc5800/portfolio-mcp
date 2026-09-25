@@ -82,4 +82,18 @@
     <tools>portfolio_list_projects(company=개인 프로젝트)</tools>
     <why>자명한 대조군과 비교한 뒤의 값. 고정 horizon 기준 12.9 와 혼동하지 말 것</why>
   </qa_pair>
+  <qa_pair>
+    <question>Qwen3-TTS 플랫폼은 몇 년 몇 월에 시작했고, 그 시점을 확정 사실로 말할 근거 문서는 무엇인가?</question>
+    <answer>2026.03</answer>
+    <tools>portfolio_get_project(name=Qwen3)</tools>
+    <why>상세 도구가 계산된 start 와 근거 문서 조각을 함께 준다</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>메모리 누수 조사 후 운영 서버에서 무중단으로 처리한 요청은 몇 건인가?</question>
+    <answer>343만</answer>
+    <tools>portfolio_search(query=운영 서버 70시간 재시작, source=resume.md)</tools>
+    <why>70시간 343만 건 실패 0·재시작 0</why>
+  </qa_pair>
+
 </evaluation>

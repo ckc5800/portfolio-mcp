@@ -38,7 +38,7 @@ async def main() -> int:
             print(f"도구 {len(tools.tools)}개 등록:")
             for t in tools.tools:
                 print(f"  - {t.name}")
-            if len(tools.tools) != 8:
+            if len(tools.tools) != 9:
                 print(f"[FAIL] 도구 수 7개 기대, {len(tools.tools)}개 등록됨")
                 failures += 1
 
@@ -129,6 +129,14 @@ async def main() -> int:
                 ("portfolio_get_timeline", {"kind": "all"},
                  lambda d: {e["kind"] for e in d["entries"]} >=
                  {"career", "project", "publication", "patent", "education"}),
+                # 프로젝트 상세 — 확정 사실과 근거 문서가 함께 와야 한다
+                ("portfolio_get_project", {"name": "Qwen3"},
+                 lambda d: d["project"]["months"] > 0
+                 and bool(d["project"]["documents"])
+                 and d["project"]["documents"][0]["resource"].startswith("portfolio://docs/")),
+                # 이름이 여러 개에 걸리면 후보를 알려줘야 한다
+                ("portfolio_get_project", {"name": "TTS"},
+                 lambda d: not d.get("project") and "TTS 운영" in (d.get("hint") or "")),
                 # 잘못된 kind 는 무엇을 쓸 수 있는지 알려줘야 한다
                 ("portfolio_get_timeline", {"kind": "zzz"},
                  lambda d: not d.get("entries") and "career" in (d.get("hint") or "")),

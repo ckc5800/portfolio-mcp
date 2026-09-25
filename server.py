@@ -21,10 +21,10 @@ from xml.etree import ElementTree
 # 데코레이터·리소스 API 형태는 같아서 import만 흡수하면 양쪽 메이저에서 돈다.
 try:                                     # mcp >= 2.0
     from mcp.server.mcpserver import MCPServer as FastMCP
-    from mcp.server.mcpserver.resources import TextResource
+    from mcp.server.mcpserver.resources import FunctionResource, TextResource
 except ImportError:                      # mcp 1.x
     from mcp.server.fastmcp import FastMCP
-    from mcp.server.fastmcp.resources import TextResource
+    from mcp.server.fastmcp.resources import FunctionResource, TextResource
 from mcp.types import Completion
 from pydantic import Field
 from rank_bm25 import BM25Okapi
@@ -316,21 +316,56 @@ def _doc_description(text: str) -> str:
     return "포트폴리오 문서 전문"
 
 
+# 텍스트를 미리 담아 두지 않고 읽을 때 만든다. TextResource 로 굳혀 두면
+# 파일을 고쳐도 리소스만 옛 내용을 계속 내보낸다(도구는 _refresh_if_changed 로
+# 새로 읽는데 리소스는 아니라, 같은 서버가 두 가지 사실을 말하게 된다).
+def _doc_reader(doc_name: str):
+    def read() -> str:
+        _refresh_if_changed()
+        text = DOCS.get(doc_name)
+        if text is None:                     # 파일이 사라진 경우
+            return "%s 문서가 없습니다. 사용 가능한 문서: %s" % (
+                doc_name, sorted(DOCS))
+        return text
+    return read
+
+
 for _name, _text in DOCS.items():
-    mcp.add_resource(TextResource(
+    mcp.add_resource(FunctionResource(
         uri=f"portfolio://docs/{_name}",
         name=_name,
         description=_doc_description(_text),
         mime_type="text/markdown",
-        text=_text,
+        fn=_doc_reader(_name),
     ))
 
-mcp.add_resource(TextResource(
+
+@mcp.resource(
+    "portfolio://docs/{doc_name}",
+    name="portfolio_doc",
+    description="기술문서 전문. doc_name 은 resources/list 의 파일명 (예: resume.md)",
+    mime_type="text/markdown",
+)
+def _doc_template(doc_name: str) -> str:
+    """문서를 이름으로 읽는 템플릿.
+
+    고정 등록은 기동 시점 목록이라, 문서를 추가하면 재시작 전까지 리소스로
+    노출되지 않는다. 템플릿을 함께 열어 두면 새 문서도 바로 읽힌다.
+    """
+    return _doc_reader(doc_name)()
+
+
+def _profile_json() -> str:
+    _refresh_if_changed()
+    return json.dumps(PROFILE, ensure_ascii=False, indent=2)
+
+
+mcp.add_resource(FunctionResource(
     uri="portfolio://profile",
     name="profile.json",
     description="검증된 경력 사실 전체. 경력·프로젝트·논문·특허·학력·기술 스택",
     mime_type="application/json",
-    text=json.dumps(PROFILE, ensure_ascii=False, indent=2),
+    fn=_profile_json,
 ))
 
 
@@ -610,6 +645,25 @@ class TimelineEntry(TypedDict):
     company: NotRequired[str | None]
     role: NotRequired[str | None]
 
+
+class ProjectDetail(TypedDict):
+    name: str
+    company: str
+    period: str
+    role: str
+    summary: str
+    # 계산된 기간. 문자열 period 를 클라이언트가 다시 파싱하지 않게 한다
+    start: str
+    end: str
+    months: int
+    ongoing: bool
+    # 이 프로젝트를 다루는 문서 조각. 어느 문서 어느 절인지 함께 준다
+    documents: list[SearchHit]
+
+
+class ProjectDetailOutput(TypedDict):
+    project: NotRequired[ProjectDetail | None]
+    hint: NotRequired[str | None]
 
 class TimelineOutput(TypedDict):
     as_of: str
@@ -1000,6 +1054,80 @@ async def portfolio_get_timeline(
         out["hint"] = ("total_career_months 는 재직 이력 전체의 합이며 "
                        "KISTI(파트타임 3개월)를 포함한다. 정규직만 세려면 "
                        "role 이 Part-time 인 항목을 빼라.")
+    return out
+
+@mcp.tool(
+    name="portfolio_get_project",
+    annotations={
+        "title": "프로젝트 상세 조회",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def portfolio_get_project(
+    name: Annotated[str, Field(
+        description="프로젝트 이름 일부 (예: 'Qwen3', '멀티모달', '예지보전')",
+        min_length=1, max_length=80)],
+    max_documents: Annotated[int, Field(
+        description="함께 반환할 문서 조각 수", ge=0, le=6)] = 3,
+) -> ProjectDetailOutput:
+    """프로젝트 하나의 확정 정보와 그 프로젝트를 다루는 문서 조각을 함께 반환한다.
+
+    목록(portfolio_list_projects)은 요약만 주고 세부는 검색으로 따로 찾아야
+    했다. 이 도구는 둘을 한 번에 준다 — 확정 사실(기간·역할·요약, 계산된
+    개월 수)과 근거 문서 조각(어느 문서 어느 절인지 포함).
+
+    이름은 부분 일치면 된다. 여러 개가 걸리면 후보를 hint 로 돌려준다.
+    """
+    _refresh_if_changed()
+    key = name.strip().lower()
+    matches = [p for p in PROFILE["projects"] if key in p["name"].lower()]
+    if not matches:
+        # 회사명으로 물었을 수도 있다 — 그 경우 목록 도구로 안내한다
+        names = [p["name"] for p in PROFILE["projects"]]
+        return {"hint": f"'{name}' 프로젝트가 없습니다. 전체 목록: {names}"}
+    if len(matches) > 1:
+        exact = [p for p in matches if p["name"].lower() == key]
+        if not exact:
+            return {"hint": "여러 프로젝트가 걸립니다. 더 구체적으로 지정하세요: "
+                            f"{[p['name'] for p in matches]}"}
+        matches = exact
+    pj = matches[0]
+    span = _timeline_entry("project", pj["name"], pj["period"])
+    docs: list[SearchHit] = []
+    if max_documents:
+        # 프로젝트 이름의 앞부분을 질의로 쓴다. 괄호 안 저장소명은 문서에
+        # 없는 경우가 많아 떼어낸다 (예: "예지보전 Agent (pdm-agent)")
+        head = pj["name"].split(" (")[0]
+        tokens = _tokenize(head)
+        scores = BM25.get_scores(tokens)
+        ranked = sorted(range(len(CHUNKS)), key=lambda i: scores[i], reverse=True)
+        docs = [
+            {"source": CHUNKS[i]["source"],
+             "section": CHUNKS[i]["section"],
+             "resource": f"portfolio://docs/{CHUNKS[i]['source']}",
+             "score": round(float(scores[i]), 2),
+             "text": _snippet(CHUNKS[i]["text"])}
+            for i in ranked[:max_documents] if scores[i] > 0
+        ]
+    detail: ProjectDetail = {
+        "name": pj["name"],
+        "company": pj.get("company", ""),
+        "period": pj.get("period", ""),
+        "role": pj.get("role", ""),
+        "summary": pj.get("summary", ""),
+        "start": span["start"] if span else "",
+        "end": span["end"] if span else "",
+        "months": span["months"] if span else 0,
+        "ongoing": bool(span and span["ongoing"]),
+        "documents": docs,
+    }
+    out: ProjectDetailOutput = {"project": detail}
+    if not docs:
+        out["hint"] = ("이 프로젝트를 다루는 문서 조각을 찾지 못했습니다. "
+                       "summary 가 현재 확인된 전부입니다.")
     return out
 
 if __name__ == "__main__":

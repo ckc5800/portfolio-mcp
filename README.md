@@ -33,11 +33,15 @@ portfolio_mcp ── BM25 검색 ─── data/docs/*.md      기술문서 5편
 | `portfolio_get_blog_posts` | 기술 블로그 최신 글 RSS 실시간 조회 (5건) |
 | `portfolio_get_company_info` | 재직 회사의 기간·직급·검증된 공식 홈페이지 |
 | `portfolio_get_timeline` | 경력·프로젝트·논문·특허·학력을 시작순 정렬 + 개월 수 계산 |
+| `portfolio_get_project` | 프로젝트 하나의 확정 사실 + 계산된 기간 + 근거 문서 조각 |
 
-도구 8개는 텍스트 JSON과 함께 structuredContent도 내려줌.
+도구 9개는 텍스트 JSON과 함께 structuredContent도 내려줌.
 반환 타입에서 생성한 outputSchema를 클라이언트에 공개하므로, 파싱 없이 스키마가 보장된 결과를 바로 쓸 수 있음.
 
-도구 외에 MCP 리소스도 6개 노출함.
+도구 외에 MCP 리소스도 6개 노출하고, 이름으로 읽는 템플릿 `portfolio://docs/{doc_name}` 도 함께 염.
+템플릿이 있으면 문서를 새로 추가해도 재시작 없이 읽힘.
+리소스는 기동 시점 텍스트를 담아 두지 않고 읽을 때 만듦 — 담아 두면 파일을 고쳐도 리소스만 옛 내용을 계속 내보내서,
+도구와 리소스가 서로 다른 사실을 말하게 됨.
 기술문서 전문 `portfolio://docs/<파일명>` 5개와 구조화 프로필 `portfolio://profile`.
 검색은 관련 조각을 찾는 입구, 리소스는 문서 전문을 읽는 경로.
 검색 결과에 그 조각이 나온 절 제목(`section`)과 문서 전문 주소(`resource`)가 함께 실려 오므로, 조각만으로 부족하면 바로 리소스를 열면 됨.
