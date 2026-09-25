@@ -243,7 +243,7 @@ python evals/run_eval.py  # 도구 조합 평가 (10문항이 도구만으로 �
 ## 평가 두 가지
 
 `eval_search.py` 는 검색 층만 본다 — 질의 14문항의 정답 포함률과 무의미 질의 거부율.
-`evals/run_eval.py` 는 그 위층을 본다 — 도구를 조합해야 풀리는 질문 10개(`evals/questions.xml`)의
+`evals/run_eval.py` 는 그 위층을 본다 — 도구를 조합해야 풀리는 질문 20개(`evals/questions.xml`)의
 정답이 실제 도구 응답 안에 있는지 확인함.
 기간 비교·개월 수·서지처럼 여러 도구를 엮어야 하는 것들이라, 데이터가 낡거나 도구가 빠지면 바로 빨간불이 됨.
 

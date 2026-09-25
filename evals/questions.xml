@@ -110,4 +110,46 @@
     <why>없음 — 없는 경험을 만들지 않는지 확인하는 문항</why>
   </qa_pair>
 
+  <qa_pair>
+    <question>인피닉 재직 기간은 몇 개월인가?</question>
+    <answer>32</answer>
+    <tools>portfolio_get_timeline(kind=career)</tools>
+    <why>2022.08~2025.04. 종료월 직전까지 세는 이력서 셈법</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>관측 스택 5종 중 경보를 담당한 도구는 무엇인가?</question>
+    <answer>AlertManager</answer>
+    <tools>portfolio_check_skill(skill=AlertManager)</tools>
+    <why>지표 Prometheus·대시보드 Grafana·경보 AlertManager·로그 Elasticsearch/Loki</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>예지보전 프로젝트에서 뒤집힌 결론은 몇 건인가?</question>
+    <answer>일곱</answer>
+    <tools>portfolio_get_project(name=예지보전)</tools>
+    <why>대조군 미비교 5건 + 가정 미검증 2건(knee·센서 합의도)</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>TTS 플랫폼의 메모리 누수 조사에서 확정한 원인은 몇 건인가?</question>
+    <answer>6건</answer>
+    <tools>portfolio_search(query=메모리 누수 원인 규명, source=resume.md)</tools>
+    <why>abort 송신 상태·KV 블록·SHM 키·jemalloc 배선·취소 장부·torch 문자열</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>블로그 최신 글을 근거로 "요즘도 활발히 활동한다"고 말해도 되는가?</question>
+    <answer>github_activity</answer>
+    <tools>portfolio_get_blog_posts()</tools>
+    <why>최신 글이 2024.01 이라 도구가 hint 로 GitHub 활동을 쓰라고 안내함</why>
+  </qa_pair>
+
+  <qa_pair>
+    <question>3D 시맨틱 세그멘테이션 연구의 2D MIoU 수치는?</question>
+    <answer>31.94</answer>
+    <tools>portfolio_get_project(name=3D Semantic)</tools>
+    <why>단일 모달의 약 2배. DBpia 초록 기준</why>
+  </qa_pair>
+
 </evaluation>

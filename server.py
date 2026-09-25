@@ -63,7 +63,10 @@ mcp = FastMCP(
         "공식 홈페이지는 portfolio_get_company_info로 확인하라. "
         "기간을 비교하거나 개월 수를 더해야 하면 직접 계산하지 말고 "
         "portfolio_get_timeline을 써라(시작·종료·개월 수가 계산돼 있다). "
-        "경력·수치·사실은 도구가 반환한 것만 인용하라."
+        "경력·수치·사실은 도구가 반환한 것만 인용하라. "
+        "이 서버가 갖고 있지 않은 것 — 연봉·처우, 평판·레퍼런스, 사내 코드와 "
+        "비공개 문서, 고객사명, 개인 신상. 이런 질문에는 추정하지 말고 "
+        "데이터에 없다고 답하라."
     ),
 )
 
@@ -268,6 +271,19 @@ def _refresh_if_changed() -> None:
 # 코퍼스에 실재하는 '온전한' 토큰 집합. bigram으로 만들어 낸 조각은 넣지 않는다.
 _VOCAB = {run for c in CHUNKS
           for run in _RUNS.findall((c["section"] + " " + c["text"]).lower())}
+
+
+def _months_since(pub: str | None) -> int | None:
+    """RFC822 발행일에서 몇 개월 지났는지. 파싱 실패는 None (추측하지 않는다)."""
+    if not pub:
+        return None
+    try:
+        from email.utils import parsedate_to_datetime
+        dt = parsedate_to_datetime(pub)
+    except Exception:
+        return None
+    now = time.time()
+    return max(0, int((now - dt.timestamp()) // (30 * 24 * 3600)))
 
 
 def _provenance() -> str:
@@ -952,7 +968,16 @@ async def portfolio_get_blog_posts() -> BlogOutput:
     except Exception as e:
         return {"posts": [], "hint": f"블로그 RSS 조회 실패({type(e).__name__}). "
                 f"블로그 주소를 안내하세요: {PROFILE['links']['blog']}"}
-    return {"posts": posts, "blog": PROFILE["links"]["blog"]}
+    out: BlogOutput = {"posts": posts, "blog": PROFILE["links"]["blog"]}
+    # 글이 오래됐으면 그 사실을 함께 준다. 이 도구는 "요즘도 활동하나"에
+    # 답하라고 만든 것인데, 날짜를 안 보고 최신 5건만 인용하면 몇 년 전
+    # 글이 최근 활동으로 둔갑한다. 판단은 클라이언트가 하되 근거는 준다.
+    months = _months_since(posts[0]["published"]) if posts else None
+    if months is not None and months >= 12:
+        out["hint"] = (f"가장 최근 글이 약 {months}개월 전입니다. "
+                       "최근 활동 근거로는 portfolio_get_github_activity 를 "
+                       "쓰고, 블로그는 과거 학습 기록으로 인용하세요.")
+    return out
 
 
 @mcp.tool(
