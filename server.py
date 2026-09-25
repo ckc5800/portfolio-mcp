@@ -270,6 +270,17 @@ _VOCAB = {run for c in CHUNKS
           for run in _RUNS.findall((c["section"] + " " + c["text"]).lower())}
 
 
+def _provenance() -> str:
+    """이 응답이 어느 파일의 언제 상태에서 나왔는지.
+
+    도구가 사실을 말할 때 근거가 어디서 왔는지 같이 줘야 클라이언트가
+    "언제 기준 정보인가"에 답할 수 있다. 데이터를 고치면 mtime 이 함께
+    올라가므로 따로 버전을 관리할 필요가 없다.
+    """
+    t = time.localtime(_DATA_MTIME) if _DATA_MTIME else time.localtime()
+    return "data/profile.json·data/docs (갱신 %s)" % time.strftime("%Y-%m-%d", t)
+
+
 def _has_corpus_term(query: str) -> bool:
     """질의가 코퍼스에 실재하는 단어를 하나라도 담고 있는가.
 
@@ -578,6 +589,8 @@ class Project(TypedDict):
 
 class ProjectsOutput(TypedDict):
     projects: list[Project]
+    # 이 사실이 어느 파일의 언제 상태에서 나왔는지
+    source: NotRequired[str | None]
     hint: NotRequired[str | None]
 
 
@@ -590,6 +603,7 @@ class Career(TypedDict):
 
 
 class ProfileOutput(TypedDict):
+    source: NotRequired[str | None]
     name: str
     title: str
     career: list[Career]
@@ -599,6 +613,7 @@ class ProfileOutput(TypedDict):
 
 
 class PublicationsOutput(TypedDict):
+    source: NotRequired[str | None]
     publications: list[dict[str, Any]]
     patents: list[dict[str, Any]]
     award: str
@@ -636,6 +651,7 @@ class CompanyOutput(TypedDict):
 
 
 class SkillEvidence(TypedDict):
+    source: NotRequired[str | None]
     skill: str
     found: bool
     # profile.json 의 기술 스택에 올라 있는가 (본인이 공개적으로 내세우는 기술)
@@ -674,10 +690,12 @@ class ProjectDetail(TypedDict):
 
 class ProjectDetailOutput(TypedDict):
     project: NotRequired[ProjectDetail | None]
+    source: NotRequired[str | None]
     hint: NotRequired[str | None]
 
 class TimelineOutput(TypedDict):
     as_of: str
+    source: NotRequired[str | None]
     entries: list[TimelineEntry]
     total_career_months: NotRequired[int | None]
     hint: NotRequired[str | None]
@@ -701,6 +719,8 @@ async def portfolio_search(
         min_length=1, max_length=200)],
     top_k: Annotated[int, Field(
         description="반환할 문서 청크 수", ge=1, le=10)] = 4,
+    offset: Annotated[int, Field(
+        description="상위 몇 건을 건너뛸지. 10건 너머를 볼 때 사용", ge=0, le=50)] = 0,
     source: Annotated[str, Field(
         description="특정 문서 안에서만 검색 (예: 'resume.md', 'tts'). 빈 값이면 전체",
         max_length=60)] = "",
@@ -742,9 +762,12 @@ async def portfolio_search(
          "score": round(float(scores[i]), 2),
          "text": _with_neighbors(i) if with_context else _snippet(CHUNKS[i]["text"])}
         # floor가 0이어도 점수 0인 청크는 결과가 아니다. 두 조건을 함께 본다
-        for i in ranked[:top_k] if scores[i] > 0 and scores[i] >= floor
+        for i in ranked[offset:offset + top_k] if scores[i] > 0 and scores[i] >= floor
     ]
     if not results:
+        if offset:
+            return {"results": [], "hint": f"offset={offset} 너머에는 결과가 "
+                    "없습니다. offset 을 줄이거나 질의를 바꾸세요."}
         return {
             "results": [],
             "hint": "관련 문서를 찾지 못했습니다. 다른 키워드로 재검색하거나 "
@@ -783,7 +806,7 @@ async def portfolio_list_projects(
                 "projects": [],
                 "hint": f"'{company}' 프로젝트가 없습니다. 보유 회사: {companies}",
             }
-    return {"projects": projects}
+    return {"projects": projects, "source": _provenance()}
 
 
 @mcp.tool(
@@ -800,6 +823,7 @@ async def portfolio_get_publications() -> PublicationsOutput:
     """이윤선의 논문(제1저자 7편), 특허(제1발명자 2건), 수상 내역을 반환한다."""
     _refresh_if_changed()
     return {
+        "source": _provenance(),
         "publications": PROFILE["publications"],
         "patents": PROFILE["patents"],
         "award": PROFILE["award"],
@@ -823,6 +847,7 @@ async def portfolio_get_profile() -> ProfileOutput:
     """
     _refresh_if_changed()
     return {
+        "source": _provenance(),
         "name": PROFILE["name"],
         "title": PROFILE["title"],
         "career": PROFILE["career"],
@@ -1057,7 +1082,8 @@ async def portfolio_get_timeline(
                 "hint": "kind 는 career · project · publication · patent · "
                         "education · all 중 하나입니다."}
     entries.sort(key=lambda e: (e["start"], e["label"]))
-    out: TimelineOutput = {"as_of": "%04d.%02d" % _now_ym(), "entries": entries}
+    out: TimelineOutput = {"as_of": "%04d.%02d" % _now_ym(), "entries": entries,
+                           "source": _provenance()}
     if want in ("all", "career"):
         # 재직 기간은 겹치지 않으므로 단순 합이 총 경력이다
         out["total_career_months"] = sum(e["months"] for e in entries
@@ -1135,7 +1161,7 @@ async def portfolio_get_project(
         "ongoing": bool(span and span["ongoing"]),
         "documents": docs,
     }
-    out: ProjectDetailOutput = {"project": detail}
+    out: ProjectDetailOutput = {"project": detail, "source": _provenance()}
     if not docs:
         out["hint"] = ("이 프로젝트를 다루는 문서 조각을 찾지 못했습니다. "
                        "summary 가 현재 확인된 전부입니다.")
@@ -1198,6 +1224,7 @@ async def portfolio_check_skill(
             if scores[i] > 0 and key in CHUNKS[i]["text"].lower()
         ]
     out: SkillEvidence = {
+        "source": _provenance(),
         "skill": skill,
         "found": bool(in_stack or projects or docs),
         "in_stack": in_stack,
