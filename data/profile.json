@@ -43,7 +43,7 @@
       "company": "MiCo AI",
       "period": "2026.03 ~ 현재",
       "role": "PM · 풀스택 단독 개발 (백엔드·프론트·인프라)",
-      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이를 모델 선정(1.7B→0.6B)부터 아키텍처·배포·운영까지 단독 구축, 고객사 PoC·시연 진행. 엔진 처리량 0.73 → 3.09 rps(4.2배 — 몸통은 vLLM 0.24 네이티브 Code2Wav CUDA-graph 배칭, 자체 FP8·executor 튜닝이 그 앞 구간). burst p95 TTFB 1,008 → 652ms, 동시 스트림 수용 한계 36(RTF 마진 기준), Stream 부하 테스트 동시 256건 무오류. 32개 언어(vLLM 10 · Supertonic 31), ITN 정규화 정확도 50.1% → 70.9%. 오픈소스 기여 vllm-project/vllm-omni — abort 요청의 sender 상태 미회수로 호스트 메모리 누수 규명, 최소 패치 A/B로 257 → 60 MiB/h(77% 감소) 검증"
+      "summary": "vLLM-Omni(Qwen3-TTS) 기반 실시간 음성 합성 게이트웨이를 모델 선정(1.7B→0.6B)부터 아키텍처·배포·운영까지 단독 구축, 고객사 PoC·시연 진행. 엔진 처리량 0.73 → 3.09 rps(4.2배 — 몸통은 vLLM 0.24 네이티브 Code2Wav CUDA-graph 배칭, 자체 FP8·executor 튜닝이 그 앞 구간). 첫 소리 지연 426 → 114ms(지표를 헤더 도착 TTFB 에서 실제 재생 시작 first_play 로 교체한 뒤 SDK 읽기 버퍼·스트림 홀드백 제거), burst p95 TTFB 1,008 → 652ms, 동시 스트림 수용 한계 36(RTF 마진 기준), Stream 부하 테스트 동시 256건 무오류. 32개 언어(vLLM 10 · Supertonic 31), ITN 정규화 정확도 50.1% → 70.9%. 오픈소스 기여 vllm-project/vllm-omni — abort 요청의 sender 상태 미회수로 호스트 메모리 누수 규명, 최소 패치 A/B로 257 → 60 MiB/h(77% 감소) 검증"
     },
     {
       "name": "TTS 운영 · 품질 관리",
