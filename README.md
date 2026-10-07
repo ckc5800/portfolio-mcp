@@ -237,7 +237,7 @@ pip install -r requirements.txt
 
 python test_client.py   # 도구·리소스·프롬프트 실호출 스모크 테스트
 python eval_search.py   # 검색 품질 평가 (정답 포함률·무의미 질의 거부율)
-python evals/run_eval.py  # 도구 조합 평가 (10문항이 도구만으로 답에 닿는지)
+python evals/run_eval.py  # 도구 조합 평가 (20문항이 도구만으로 답에 닿는지)
 ```
 
 ## 평가 두 가지
